@@ -2,6 +2,7 @@
 #include "bidi.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifndef TRUE
 #define TRUE 1
@@ -101,11 +102,12 @@ static void bidi_add_str_c(FriBidiChar *out,int *new_len,
  * in "in" is mirrored charrecter and returns its mirrot
  * in this case. If it is not mirrored then returns NULL */
 
-static const char *bidi_mirror(FriBidiChar *in)
+static const char *bidi_mirror(FriBidiChar *in,int *size)
 {
 	int pos=0;
 	while(bidi_mirror_list[pos][0]) {
 		if(bidi_strieq_u_a(in,bidi_mirror_list[pos][0])) {
+			*size=strlen(bidi_mirror_list[pos][0]);
 			return bidi_mirror_list[pos][1];
 		}
 		pos++;
@@ -131,7 +133,7 @@ int bidi_basic_level(int is_heb)
 void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,int is_heb)
 {
 	int len,new_len,level,new_level,brakets;
-	int i;
+	int i,size;
 	
 	const char *tag;
 	
@@ -166,12 +168,13 @@ void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,int is_heb)
 			bidi_add_str_c(out,&new_len,limit,TAG_CLOSE);
 			brakets--;
 		}
-		if((new_level & 1)!=0 && (tag=bidi_mirror(in+i))!=NULL){
+		if((new_level & 1)!=0 && (tag=bidi_mirror(in+i,&size))!=NULL){
 			/* Replace charrecter with its mirror only in case
 			 * we are in RTL direction */
 			
 			/* Note this can be a sequence like "\{" */
 			bidi_add_str_c(out,&new_len,limit,tag);
+			i+=size-1;
 		}
 		else {
 			bidi_add_char_u(out,&new_len,limit,in[i]);
