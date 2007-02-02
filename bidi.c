@@ -11,9 +11,6 @@
 #define FALSE 0
 #endif
 
-#define DEFIS_UGLY_HACK
-#define SMART_FRIBIDI
-
 /***********************/
 /* Global Data */
 
@@ -181,7 +178,8 @@ void bidi_tag_tolerant_fribidi_l2v(	FriBidiChar *in,int len,
 		}
 	}
 	
-	fribidi_log2vis_get_embedding_levels(in_tmp,len,direction,embed_tmp);
+	/* Note - you must take the new size for firibidi */
+	fribidi_log2vis_get_embedding_levels(in_tmp,out_pos,direction,embed_tmp);
 
 	/* Return the tags (or neutral embedding) */
 	

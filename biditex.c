@@ -1,6 +1,6 @@
 /*********************************/
 /* Copyright Artyom Tonkikh 2007 */
-/* License LGPL                  */
+/* License GPL                   */
 /*********************************/
 #include <stdio.h>
 #include <string.h>
@@ -14,10 +14,9 @@
 void help(void)
 {
 	fprintf(stderr,
-			"usage: biditex parameters\n"
-			"       -o output file name\n"
-			"       -e utf8 | iso8859-8\n"
-			"       inputfilename\n");
+			"usage: biditex [ parameters ] [ inputfilename ]\n"
+			"       -o file_name.tex             - output file name\n"
+			"       -e utf8 | iso8859-8 | cp1255 - encoding\n");
 	exit(1);
 }
 
@@ -34,7 +33,10 @@ void read_parameters(int argc,char **argv,
 	int cnt1=0,cnt2=0,cnt3=0;
 	
 	for(i=1;i<argc;i++){
-		if(strcmp(argv[i],"-o")==0) {
+		if(strcmp(argv[i],"-h")==0) {
+			help();
+		}
+		else if(strcmp(argv[i],"-o")==0) {
 			i++;
 			if(i>=argc){
 				help();
@@ -49,6 +51,9 @@ void read_parameters(int argc,char **argv,
 			}
 			if(strcmp(argv[i],"utf8")==0) {
 				*encoding=ENC_UTF_8;
+			}
+			else if(strcmp(argv[i],"cp1255")==0) {
+				*encoding=ENC_CP1255;
 			}
 			else if(strcmp(argv[i],"iso8859-8")==0) {
 				*encoding=ENC_ISO_8859_8;

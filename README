@@ -1,10 +1,8 @@
 Copyright - Artyom Tonkikh
-Licence   - (L)GPL
+Licence   - GPLv2
 Program: biditex
 
 This is only preliminary very developement version
-It *may somehow work* - it is not even release!
+It *may work* - it is not even release!
 
 requires libfribidi development files installed
-
-

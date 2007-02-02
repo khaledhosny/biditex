@@ -22,6 +22,10 @@ int io_read_line(FriBidiChar *text,int encoding,FILE *f)
 			len_uni=fribidi_iso8859_8_to_unicode(text_buffer,len_char,text);
 			text[len_uni]=0;
 			break;
+		case ENC_CP1255:
+			len_uni=fribidi_cp1255_to_unicode(text_buffer,len_char,text);
+			text[len_uni]=0;
+			break;
 		case ENC_UTF_8:
 			len_uni=fribidi_utf8_to_unicode(text_buffer,len_char,text);
 			text[len_uni]=0;
@@ -46,6 +50,11 @@ void io_write_line(FriBidiChar *text,int encoding,FILE *f)
 	
 	if(encoding == ENC_ISO_8859_8) {
 		char_len=fribidi_unicode_to_iso8859_8(text,len,text_buffer);
+		text_buffer[char_len]=0;
+		fprintf(f,"%s\n",text_buffer);
+	}
+	else if(encoding == ENC_CP1255) {
+		char_len=fribidi_unicode_to_cp1255(text,len,text_buffer);
 		text_buffer[char_len]=0;
 		fprintf(f,"%s\n",text_buffer);
 	}
