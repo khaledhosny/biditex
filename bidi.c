@@ -12,6 +12,7 @@
 #endif
 
 #define DEFIS_UGLY_HACK
+#define SMART_FRIBIDI
 
 /***********************/
 /* Global Data */
@@ -135,6 +136,78 @@ int bidi_basic_level(int is_heb)
 	return 0;
 }
 
+#ifdef SMART_FRIBIDI
+
+int is_cmd_char(FriBidiChar ch)
+{
+	if( ('a'<= ch && ch <='z') || ('A' <=ch && ch <= 'Z') )
+		return 1;
+	return 0;
+}
+
+void bidi_tag_tolerant_fribidi_l2v(	FriBidiChar *in,int len,
+									FriBidiCharType *direction,
+									FriBidiLevel *embed)
+{
+	int do_not_copy,in_pos,out_pos;
+	FriBidiChar *in_tmp;
+	FriBidiLevel *embed_tmp;
+	FriBidiLevel fill_level;
+	
+	fill_level=bidi_basic_level( *direction == FRIBIDI_TYPE_RTL);
+	
+	in_tmp=(FriBidiChar*)malloc(sizeof(FriBidiChar)*len);
+	embed_tmp=(FriBidiLevel*)malloc(sizeof(FriBidiLevel)*len);
+	
+	if(!in_tmp || !embed_tmp) {
+		fprintf(stderr,"Out of memory\n");
+		exit(1);
+	}
+	
+	do_not_copy=0;
+	
+	/* Copy all the data without tags */
+	
+	for(in_pos=0,out_pos=0;in_pos<len;in_pos++) {
+		if(in[in_pos]=='\\' && in_pos<len-1 && is_cmd_char(in[in_pos+1])) {
+			do_not_copy=1;
+		}
+		else if(do_not_copy && !is_cmd_char(in[in_pos])) {
+			do_not_copy=0;
+		}
+		if(!do_not_copy) {
+			in_tmp[out_pos]=in[in_pos];
+			out_pos++;
+		}
+	}
+	
+	fribidi_log2vis_get_embedding_levels(in_tmp,len,direction,embed_tmp);
+
+	/* Return the tags (or neutral embedding) */
+	
+	for(in_pos=0,out_pos=0;in_pos<len;in_pos++) {
+		if(in[in_pos]=='\\' && in_pos<len-1 && is_cmd_char(in[in_pos+1])) {
+			do_not_copy=1;
+		}
+		else if(do_not_copy && !is_cmd_char(in[in_pos])) {
+			do_not_copy=0;
+		}
+		if(!do_not_copy) {
+			embed[in_pos]=embed_tmp[out_pos];
+			out_pos++;
+		}
+		else {
+			embed[in_pos]=fill_level;
+		}
+	}
+	
+	/* Not forget to free */
+	free(embed_tmp);
+	free(in_tmp);
+}
+
+#endif
+
 /* The function that parses line and adds required \R \L tags */
 void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,int is_heb)
 {
@@ -149,7 +222,11 @@ void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,int is_heb)
 	
 	len=bidi_strlen(in);
 	
+#ifdef SMART_FRIBIDI	
+	bidi_tag_tolerant_fribidi_l2v(in,len,&direction,bidi_embed);
+#else
 	fribidi_log2vis_get_embedding_levels(in,len,&direction,bidi_embed);
+#endif
 
 	level=bidi_basic_level(is_heb);
 	
