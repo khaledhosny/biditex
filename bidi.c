@@ -11,6 +11,8 @@
 #define FALSE 0
 #endif
 
+#define DEFIS_UGLY_HACK
+
 /***********************/
 /* Global Data */
 
@@ -35,6 +37,10 @@ static const char *bidi_mirror_list[][2] =
 	{"]",  "["},
 	{"\\{","\\}"},
 	{"\\}","\\{"},
+#ifdef DEFIS_UGLY_HACK	
+	{"---","\\L{---}"},
+	{"--","\\L{--}"},
+#endif
 	{NULL,NULL}
 };
 
