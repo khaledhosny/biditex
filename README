@@ -1,8 +1,34 @@
-Copyright - Artyom Tonkikh
-Licence   - GPLv2
-Program: biditex
+#############################
+# Copyright: Artyom Tonkikh #
+# Licence  : GPLv2          #
+# Program  : biditex        #
+#############################
 
-This is only preliminary very developement version
-It *may work* - it is not even release!
+This is only preliminary early developement version.
+It *may work* or *may destroy your system*.
+Use it on your own risk!
 
-requires libfribidi development files installed
+Installation:
+=============
+
+Requirements:
+-------------
+ libfribidi-dev
+
+Install:
+--------
+
+ As user run:
+ $ make
+ Then as superuser
+ # make install
+ 
+ If you want to use a path different from
+ the default /usr/local/bin/ you need to
+ edit the makefile (change INSTPATH)
+
+Uninstall:
+----------
+
+ As superuser
+ # make uninstall

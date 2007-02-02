@@ -24,7 +24,7 @@ void help(void)
 /* Read cmd line parameters
  * following are supported 
  * -o output file name
- * -e utf8 | iso8859-8 
+ * -e utf8 | iso8859-8 | cp1255
  * inputfilename */
 void read_parameters(int argc,char **argv,
 					char **fname_in,char **fname_out,int *encoding)

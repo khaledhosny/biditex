@@ -14,6 +14,17 @@
 /***********************/
 /* Global Data */
 
+#ifdef SMART_FRIBIDI
+typedef struct COMMAND {
+	char *name;
+	struct COMMAND *next;
+} 
+	bidi_cmd_t;
+
+bidi_cmd_t *bidi_command_list;
+
+#endif
+
 enum { MODE_BIDIOFF, MODE_BIDION };
 
 static int bidi_mode;
@@ -46,8 +57,9 @@ static const char *bidi_mirror_list[][2] =
 /* TAGS */
 /********/
 
-#define TAG_BIDI_ON		"%BIDION"
-#define TAG_BIDI_OFF	"%BIDIOFF"
+#define TAG_BIDI_ON			"%BIDION"
+#define TAG_BIDI_OFF		"%BIDIOFF"
+#define TAG_BIDI_NEW_TAG	"%BIDITAG"
 
 #define TAG_RTL			"\\R{"
 #define TAG_LTR			"\\L{"
@@ -120,11 +132,6 @@ static const char *bidi_mirror(FriBidiChar *in,int *size)
 }
 
 
-void bidi_init(void)
-{
-	bidi_mode = MODE_BIDIOFF;
-}
-
 /* Returns the minimal embedding level for required direction */
 int bidi_basic_level(int is_heb)
 {
@@ -135,25 +142,111 @@ int bidi_basic_level(int is_heb)
 
 #ifdef SMART_FRIBIDI
 
-int is_cmd_char(FriBidiChar ch)
+void bidi_add_command(char *name)
+{
+	bidi_cmd_t *new_cmd;
+	char *new_text;
+	if(!(new_cmd=(bidi_cmd_t*)malloc(sizeof(bidi_cmd_t)))
+		|| !(new_text=(char*)malloc(strlen(name)+1))) {
+		fprintf(stderr,"Out of memory\n");
+		exit(1);
+	}
+	new_cmd->next=bidi_command_list;
+	new_cmd->name=new_text;
+	strcpy(new_text,name);
+	bidi_command_list = new_cmd;
+}
+
+int bidi_is_cmd_char(FriBidiChar ch)
 {
 	if( ('a'<= ch && ch <='z') || ('A' <=ch && ch <= 'Z') )
 		return 1;
 	return 0;
 }
 
+void bidi_add_command_u(FriBidiChar *text)
+{
+	char buffer[256];
+	int len=0;
+	if(*text!=' ' && *text!='\t') {
+		fprintf(stderr,"Tag definition should have space\n");
+		exit(1);
+	}
+	while(*text==' ' || *text=='\t') {
+		text++;
+	}
+	if(!bidi_is_cmd_char(*text)) {
+		fprintf(stderr,"Syntaxis error \n");
+	}
+	while(bidi_is_cmd_char(*text) && len < 255) {
+		buffer[len]=*text;
+		text++;
+		len++;
+	}
+	if(len>=255) {
+		fprintf(stderr,"Tag is too long\n");
+		exit(1);
+	}
+	buffer[len]=0;
+	bidi_add_command(buffer);
+}
+
+int bidi_in_cmd_list(FriBidiChar *text,int len)
+{
+	int i;
+	bidi_cmd_t *p;
+	for(p=bidi_command_list;p;p=p->next) {
+		for(i=0;i<len;i++) {
+			if(text[i]!=p->name[i]) 
+				break;
+		}
+		if(i==len && p->name[len]==0){
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int bidi_is_command(FriBidiChar *text,int *command_length)
+{
+	int len;
+	if(*text!='\\'){
+		return 0;
+	}
+	if(!bidi_is_cmd_char(text[1])) {
+		return 0;
+	}
+	text++;
+	len=0;
+	while(bidi_is_cmd_char(text[len])){
+		len++;
+	}
+	
+	if(!bidi_in_cmd_list(text,len) || text[len]!='{') {
+		*command_length=len+1;
+		return 1;
+	}
+	len++;
+	while(text[len] && text[len]!='}') {
+		len++;
+	}
+	if(text[len]=='}') len++;
+	*command_length=len+1;
+	return 1;
+}
+
 void bidi_tag_tolerant_fribidi_l2v(	FriBidiChar *in,int len,
 									FriBidiCharType *direction,
 									FriBidiLevel *embed)
 {
-	int do_not_copy,in_pos,out_pos;
+	int in_pos,out_pos,length,i;
 	FriBidiChar *in_tmp;
 	FriBidiLevel *embed_tmp;
 	FriBidiLevel fill_level;
 	
 	fill_level=bidi_basic_level( *direction == FRIBIDI_TYPE_RTL);
 	
-	in_tmp=(FriBidiChar*)malloc(sizeof(FriBidiChar)*len);
+	in_tmp=(FriBidiChar*)malloc(sizeof(FriBidiChar)*(len+1));
 	embed_tmp=(FriBidiLevel*)malloc(sizeof(FriBidiLevel)*len);
 	
 	if(!in_tmp || !embed_tmp) {
@@ -161,44 +254,42 @@ void bidi_tag_tolerant_fribidi_l2v(	FriBidiChar *in,int len,
 		exit(1);
 	}
 	
-	do_not_copy=0;
-	
 	/* Copy all the data without tags */
-	
-	for(in_pos=0,out_pos=0;in_pos<len;in_pos++) {
-		if(in[in_pos]=='\\' && in_pos<len-1 && is_cmd_char(in[in_pos+1])) {
-			do_not_copy=1;
+	in_pos=0;
+	out_pos=0;
+
+	while(in_pos<len) {
+		if(bidi_is_command(in+in_pos,&length)){
+			in_pos+=length;
+			continue;
 		}
-		else if(do_not_copy && !is_cmd_char(in[in_pos])) {
-			do_not_copy=0;
-		}
-		if(!do_not_copy) {
-			in_tmp[out_pos]=in[in_pos];
-			out_pos++;
-		}
+		/* Copy to buffer */
+		in_tmp[out_pos]=in[in_pos];
+		out_pos++;
+		in_pos++;
 	}
 	
 	/* Note - you must take the new size for firibidi */
 	fribidi_log2vis_get_embedding_levels(in_tmp,out_pos,direction,embed_tmp);
 
 	/* Return the tags (or neutral embedding) */
-	
-	for(in_pos=0,out_pos=0;in_pos<len;in_pos++) {
-		if(in[in_pos]=='\\' && in_pos<len-1 && is_cmd_char(in[in_pos+1])) {
-			do_not_copy=1;
+	in_pos=0;
+	out_pos=0;
+
+	while(in_pos<len) {
+		if(bidi_is_command(in+in_pos,&length)){
+			for(i=0;i<length;i++){
+				embed[in_pos]=fill_level;
+				in_pos++;
+			}
+			continue;
 		}
-		else if(do_not_copy && !is_cmd_char(in[in_pos])) {
-			do_not_copy=0;
-		}
-		if(!do_not_copy) {
-			embed[in_pos]=embed_tmp[out_pos];
-			out_pos++;
-		}
-		else {
-			embed[in_pos]=fill_level;
-		}
+		/* Retrieve embedding */
+		embed[in_pos]=embed_tmp[out_pos];
+		out_pos++;
+		in_pos++;
 	}
-	
+
 	/* Not forget to free */
 	free(embed_tmp);
 	free(in_tmp);
@@ -282,7 +373,12 @@ int bidi_process(FriBidiChar *in,FriBidiChar *out)
 		bidi_mode = MODE_BIDIOFF;
 		return 0;
 	}
-	
+#ifdef SMART_FRIBIDI	
+	if(bidi_strieq_u_a(in,TAG_BIDI_NEW_TAG)) {
+		bidi_add_command_u(in+strlen(TAG_BIDI_NEW_TAG));
+		return 0;
+	}
+#endif
 	if(bidi_mode == MODE_BIDION) {
 		bidi_add_tags(in,out,MAX_LINE_SIZE,TRUE);
 	}
@@ -297,7 +393,25 @@ int bidi_process(FriBidiChar *in,FriBidiChar *out)
 
 void bidi_finish(void)
 {
+#ifdef SMART_FRIBIDI
+	bidi_cmd_t *tmp;
+	while(bidi_command_list) {
+		tmp=bidi_command_list;
+		bidi_command_list=bidi_command_list->next;
+		free(tmp->name);
+		free(tmp);
+	}
+#endif
 	if(bidi_mode == MODE_BIDION) {
 		fprintf(stderr,"Warning: No %%BIDIOFF Tag at the end of the file\n");
 	}
+}
+
+void bidi_init(void)
+{
+	bidi_mode = MODE_BIDIOFF;
+#ifdef SMART_FRIBIDI
+	bidi_add_command("begin");
+	bidi_add_command("end");	
+#endif
 }
