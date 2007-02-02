@@ -1,6 +1,7 @@
 TR=biditex
 SRC=bidi.c  biditex.c  io.c
 OBJ := $(patsubst %.c,%.o,$(SRC))
+INSTPATH=/usr/local/bin/
 
 
 LIBS = `fribidi-config --libs`
@@ -21,6 +22,12 @@ clean:
 
 depend:
 	$(CC) -M $(SRC) > .depend
+
+install: $(TR)
+	cp $(TR) $(INSTPATH)
+
+uninstall:
+	rm "$(INSTPATH)$(TR)"
 
 -include .depend
 
