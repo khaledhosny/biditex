@@ -46,10 +46,13 @@ static const char *bidi_mirror_list[][2] =
 	{"]",  "["},
 	{"\\{","\\}"},
 	{"\\}","\\{"},
-#ifdef DEFIS_UGLY_HACK	
+	{NULL,NULL}
+};
+
+static const char *bidi_hack_list[][2] = 
+{
 	{"---","\\L{---}"},
 	{"--","\\L{--}"},
-#endif
 	{NULL,NULL}
 };
 
@@ -118,13 +121,26 @@ static void bidi_add_str_c(FriBidiChar *out,int *new_len,
  * in "in" is mirrored charrecter and returns its mirrot
  * in this case. If it is not mirrored then returns NULL */
 
-static const char *bidi_mirror(FriBidiChar *in,int *size)
+static const char *bidi_mirror(FriBidiChar *in,int *size,
+								int replace_minus)
 {
 	int pos=0;
 	while(bidi_mirror_list[pos][0]) {
 		if(bidi_strieq_u_a(in,bidi_mirror_list[pos][0])) {
 			*size=strlen(bidi_mirror_list[pos][0]);
 			return bidi_mirror_list[pos][1];
+		}
+		pos++;
+	}
+
+	if(!replace_minus) {
+		return NULL;
+	}
+	pos=0;
+	while(bidi_hack_list[pos][0]) {
+		if(bidi_strieq_u_a(in,bidi_hack_list[pos][0])) {
+			*size=strlen(bidi_hack_list[pos][0]);
+			return bidi_hack_list[pos][1];
 		}
 		pos++;
 	}
@@ -298,7 +314,8 @@ void bidi_tag_tolerant_fribidi_l2v(	FriBidiChar *in,int len,
 #endif
 
 /* The function that parses line and adds required \R \L tags */
-void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,int is_heb)
+void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,
+					int is_heb,int replace_minus)
 {
 	int len,new_len,level,new_level,brakets;
 	int i,size;
@@ -340,7 +357,7 @@ void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,int is_heb)
 			bidi_add_str_c(out,&new_len,limit,TAG_CLOSE);
 			brakets--;
 		}
-		if((new_level & 1)!=0 && (tag=bidi_mirror(in+i,&size))!=NULL){
+		if((new_level & 1)!=0 && (tag=bidi_mirror(in+i,&size,replace_minus))!=NULL){
 			/* Replace charrecter with its mirror only in case
 			 * we are in RTL direction */
 			
@@ -361,7 +378,7 @@ void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,int is_heb)
 }
 
 /* Main line processing function */
-int bidi_process(FriBidiChar *in,FriBidiChar *out)
+int bidi_process(FriBidiChar *in,FriBidiChar *out,int replace_minus)
 {
 	int i;
 	if(bidi_strieq_u_a(in,TAG_BIDI_ON)) {
@@ -380,7 +397,7 @@ int bidi_process(FriBidiChar *in,FriBidiChar *out)
 	}
 #endif
 	if(bidi_mode == MODE_BIDION) {
-		bidi_add_tags(in,out,MAX_LINE_SIZE,TRUE);
+		bidi_add_tags(in,out,MAX_LINE_SIZE,TRUE,replace_minus);
 	}
 	else {
 		for(i=0;in[i];i++){

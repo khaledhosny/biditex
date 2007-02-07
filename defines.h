@@ -7,10 +7,6 @@ enum { ENC_UTF_8 , ENC_ISO_8859_8, ENC_CP1255 };
 /* PROJECT DEFINES */
 /*******************/
 
-#define DEFIS_UGLY_HACK
-/* This is ugly hack that makes "--" and "---" sequence work under
- * ivirtex - this should be fixed in ivirtex and not in biditex */	
-
 #define SMART_FRIBIDI
 /* This prevents from fribidi process sequences like "\section"
  * it force libfribidi to ignore them. This is temporary hack

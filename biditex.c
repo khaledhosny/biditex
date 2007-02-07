@@ -16,7 +16,10 @@ void help(void)
 	fprintf(stderr,
 			"usage: biditex [ parameters ] [ inputfilename ]\n"
 			"       -o file_name.tex             - output file name\n"
-			"       -e utf8 | iso8859-8 | cp1255 - encoding\n");
+			"       -e utf8 | iso8859-8 | cp1255 - encoding\n"
+			"       -m                 replace '--'  &   '---'\n"
+			"                          by   '\\L{--} & \\L{'---'}\n"
+	);
 	exit(1);
 }
 
@@ -27,7 +30,8 @@ void help(void)
  * -e utf8 | iso8859-8 | cp1255
  * inputfilename */
 void read_parameters(int argc,char **argv,
-					char **fname_in,char **fname_out,int *encoding)
+					char **fname_in,char **fname_out,
+					int *encoding,int *replace_minus)
 {
 	int i;
 	int cnt1=0,cnt2=0,cnt3=0;
@@ -35,6 +39,9 @@ void read_parameters(int argc,char **argv,
 	for(i=1;i<argc;i++){
 		if(strcmp(argv[i],"-h")==0) {
 			help();
+		}
+		else if(strcmp(argv[i],"-m")==0) {
+			*replace_minus = 1;
 		}
 		else if(strcmp(argv[i],"-o")==0) {
 			i++;
@@ -85,6 +92,7 @@ int main(int argc,char **argv)
 {
 	char *fname_in=NULL,*fname_out=NULL;
 	int encoding=ENC_DEFAULT;
+	int replace_minus = 0;
 
 	FILE *f_in,*f_out;
 	
@@ -92,7 +100,7 @@ int main(int argc,char **argv)
 	 * Inicialization * 
 	 ******************/
 		
-	read_parameters(argc,argv,&fname_in,&fname_out,&encoding);
+	read_parameters(argc,argv,&fname_in,&fname_out,&encoding,&replace_minus);
 
 	if(!fname_in) {
 		f_in = stdin;
@@ -123,7 +131,7 @@ int main(int argc,char **argv)
 
 	while(io_read_line(text_line_in,encoding,f_in)) {
 		
-		if(bidi_process(text_line_in,text_line_out)) {
+		if(bidi_process(text_line_in,text_line_out,replace_minus)) {
 			/*If there is something to print */
 			io_write_line(text_line_out,encoding,f_out);
 		}
