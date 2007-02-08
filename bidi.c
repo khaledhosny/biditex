@@ -38,6 +38,7 @@ bidi_cmd_t *bidi_command_list;
 
 enum { MODE_BIDIOFF, MODE_BIDION };
 
+
 static int bidi_mode;
 static FriBidiLevel bidi_embed[MAX_LINE_SIZE];
 
@@ -192,7 +193,7 @@ int bidi_is_cmd_char(FriBidiChar ch)
 
 void bidi_add_command_u(FriBidiChar *text)
 {
-	char buffer[256];
+	char buffer[MAX_COMMAND_LEN];
 	int len=0;
 	if(*text!=' ' && *text!='\t') {
 		fprintf(stderr,"Tag definition should have space\n");
@@ -204,12 +205,12 @@ void bidi_add_command_u(FriBidiChar *text)
 	if(!bidi_is_cmd_char(*text)) {
 		fprintf(stderr,"Syntaxis error \n");
 	}
-	while(bidi_is_cmd_char(*text) && len < 255) {
+	while(bidi_is_cmd_char(*text) && len < MAX_COMMAND_LEN-1) {
 		buffer[len]=*text;
 		text++;
 		len++;
 	}
-	if(len>=255) {
+	if(len>=MAX_COMMAND_LEN-1) {
 		fprintf(stderr,"Tag is too long\n");
 		exit(1);
 	}
@@ -217,6 +218,8 @@ void bidi_add_command_u(FriBidiChar *text)
 	bidi_add_command(buffer);
 }
 
+/* Verirfies wether then text of length "len" is
+ * in command list */
 int bidi_in_cmd_list(FriBidiChar *text,int len)
 {
 	int i;
@@ -232,65 +235,212 @@ int bidi_in_cmd_list(FriBidiChar *text,int len)
 	}
 	return 0;
 }
-
+/*Verifies wether the next string is command 
+ * ie: "\\[a-zA-Z]+" or "\\[a-zA-Z]+\*" */
 int bidi_is_command(FriBidiChar *text,int *command_length)
 {
 	int len;
-	if(*text!='\\'){
-		return 0;
+	if(*text != '\\' || !bidi_is_cmd_char(text[1])) {
+		return FALSE;
 	}
-	if(!bidi_is_cmd_char(text[1])) {
-		return 0;
-	}
-	text++;
-	len=0;
-	while(bidi_is_cmd_char(text[len])){
+	len=1;
+	while(bidi_is_cmd_char(text[len])) {
 		len++;
+	}
+	if(text[len] == '*') {
+		len++;
+	}
+	*command_length = len;
+	return TRUE;
+}
+
+/* This is implementation of state machine with stack 
+ * that distinguishs between text and commands */
+
+/* STACK VALUES */
+enum { 
+	EMPTY,
+	SQ_BRACKET ,SQ_BRACKET_IGN,
+	BRACKET, BRACKET_IGN,
+	CMD_BRACKET, CMD_BRACKET_IGN
+};
+/* STATES */
+enum { ST_NO, ST_NORM, ST_IGN };
+
+/* Used for ignore commands */
+int bidi_is_ignore(int top)
+{
+	return	top == SQ_BRACKET_IGN
+			|| top== BRACKET_IGN
+			|| top == CMD_BRACKET_IGN;
+}
+
+int bidi_state_on_left_br(int top,int *after_command_state)
+{
+	int ign_addon;
+	int push,state = *after_command_state;
+	if(bidi_is_ignore(top) || state == ST_IGN) {
+		ign_addon = 1;
+	}
+	else {
+		ign_addon = 0;
 	}
 	
-	if(!bidi_in_cmd_list(text,len) || text[len]!='{') {
-		*command_length=len+1;
-		return 1;
+	if(state) {
+		push = CMD_BRACKET;
 	}
-	len++;
-	while(text[len] && text[len]!='}') {
+	else{
+		push = BRACKET;
+	}
+	
+	*after_command_state = ST_NO;
+	return push + ign_addon;
+}
+
+int bidi_state_on_left_sq_br(int top,int *after_command_state)
+{
+	int push;
+	if(bidi_is_ignore(top) || *after_command_state == ST_IGN) {
+		push = SQ_BRACKET_IGN;
+	}
+	else {
+		push = SQ_BRACKET;
+	}
+	*after_command_state = ST_NO;
+	return push;
+}
+
+void bidi_state_on_right_br(int top,int *after_command_state)
+{
+	if(top == CMD_BRACKET) {
+		*after_command_state = ST_NORM;
+	}
+	else if(top == BRACKET || top == BRACKET_IGN) {
+		*after_command_state = ST_NO;
+	}
+	else {/*top == CMD_BRACKET_IGN*/
+		*after_command_state = ST_IGN;
+	}
+}
+
+void bidi_state_on_right_sq_br(int top,int *after_command_state)
+{
+	if(top == SQ_BRACKET_IGN) {
+		*after_command_state = ST_IGN;
+	}
+	else { /* top == SQ_BRACKET */
+		*after_command_state = ST_NORM;
+	}
+}
+
+/* Support of equations */
+int bidi_calc_equation(FriBidiChar *in)
+{
+	int len=1;
+	while(in[len] && in[len]!='$') {
+		if(in[len]=='\\' && (in[len+1]=='$' || in[len+1]=='\\')) {
+			len+=2;
+		}
+		else {
+			len++;
+		}
+	}
+	if(in[len]=='$')
 		len++;
-	}
-	if(text[len]=='}') len++;
-	*command_length=len+1;
-	return 1;
+	return len;		
 }
 
 /* This function parses the text "in" in marks places that
  * should be ignored by fribidi in "is_command" as true */
-
 void bidi_mark_commands(FriBidiChar *in,int len,char *is_command,int is_heb)
 {
-	int i,j,cmd_len;
-	for(i=0;i<len;i+=cmd_len) {
-		if(bidi_is_command(in+i,&cmd_len)) {
-			for(j=0;j<cmd_len;j++) {
-				is_command[i+j]=TRUE;
+
+	char *parthness_stack;
+	int stack_size=0;
+	int cmd_len,top;
+	int after_command_state=ST_NO;
+	int mark,pos,symbol,i,push;
+
+	/* Assumption - depth of stack can not be bigger then text length */
+	parthness_stack = utl_malloc(len);
+	
+	pos=0;
+	
+	while(pos<len) {
+		
+		top = stack_size == 0 ? EMPTY : parthness_stack[stack_size-1];
+		symbol=in[pos];
+#ifdef DEBUG_STATE_MACHINE		
+		printf("pos=%d sybol=%c state=%d top=%d\n",
+			pos,(symbol < 127 ? symbol : '#'),after_command_state,top);
+#endif 
+		if(bidi_is_command(in+pos,&cmd_len)) {
+			for(i=0;i<cmd_len;i++) {
+				is_command[i+pos]=TRUE;
 			}
+			if(bidi_in_cmd_list(in+pos+1,cmd_len-1)) {
+				after_command_state = ST_IGN;
+			}
+			else {
+				after_command_state = ST_NORM;
+			}
+			pos+=cmd_len;
+			continue;
+		}
+		else if((symbol=='\\' && in[pos+1]=='\\') || symbol=='$' ) {
+			if(symbol == '$') {
+				cmd_len=bidi_calc_equation(in+pos);
+			}
+			else {
+				cmd_len = 2;
+			}
+			
+			for(i=0;i<cmd_len;i++) {
+				is_command[i+pos]=TRUE;
+			}
+			pos+=cmd_len;
+			continue;
+		}
+		else if( symbol == '{' ) {
+			push = bidi_state_on_left_br(top,&after_command_state);
+			parthness_stack[stack_size++] = push;
+			mark=TRUE;
+		}
+		else if(symbol == '[' && after_command_state) {
+			push = bidi_state_on_left_sq_br(top,&after_command_state);
+			parthness_stack[stack_size++] = push;
+			mark=TRUE;
+		}
+		else if(symbol == ']' && (top == SQ_BRACKET || top == SQ_BRACKET_IGN)){
+			bidi_state_on_right_sq_br(top,&after_command_state);
+			stack_size--;
+			mark=TRUE;
+		}
+		else if(symbol == '}' && (BRACKET <= top && top <= CMD_BRACKET_IGN)) {
+			bidi_state_on_right_br(top,&after_command_state);
+			stack_size--;
+			mark=TRUE;
 		}
 		else {
-			is_command[i]=FALSE;
-			cmd_len = 1;
+			mark = bidi_is_ignore(top);
+			after_command_state = ST_NO;
 		}
+		is_command[pos++]=mark;
 	}
+	
+	utl_free(parthness_stack);
 }
-
 
 /* This function marks embedding levels at for text "in",
  * it ignores different tags */
 void bidi_tag_tolerant_fribidi_l2v(	FriBidiChar *in,int len,
 									int is_heb,
-									FriBidiLevel *embed)
+									FriBidiLevel *embed,
+									char *is_command)
 {
 	int in_pos,out_pos,cmd_len,i;
 	FriBidiChar *in_tmp;
 	FriBidiLevel *embed_tmp,fill_level;
-	char *is_command;
 	FriBidiCharType direction;
 
 	if(is_heb)
@@ -300,7 +450,6 @@ void bidi_tag_tolerant_fribidi_l2v(	FriBidiChar *in,int len,
 	
 	in_tmp=(FriBidiChar*)utl_malloc(sizeof(FriBidiChar)*(len+1));
 	embed_tmp=(FriBidiLevel*)utl_malloc(sizeof(FriBidiLevel)*len);
-	is_command=(char*)utl_malloc(len);
 	
 	/**********************************************
 	 * This is main parser that marks commands    *
@@ -341,7 +490,7 @@ void bidi_tag_tolerant_fribidi_l2v(	FriBidiChar *in,int len,
 	while(in_pos<len) {
 		if(is_command[in_pos]){
 			/* Find the length of the part that 
-			 * has */
+			 * has a command/tag */
 			for(cmd_len=0;in_pos+cmd_len<len;cmd_len++) {
 				if(!is_command[cmd_len+in_pos])
 					break;
@@ -353,7 +502,7 @@ void bidi_tag_tolerant_fribidi_l2v(	FriBidiChar *in,int len,
 			}
 			else {
 				/* Fill with minimum on both sides */
-				fill_level = min ( embed[out_pos - 1] , embed[out_pos] );
+				fill_level = min(embed_tmp[out_pos-1],embed_tmp[out_pos]);
 			}
 			
 			for(i=0;i<cmd_len;i++){
@@ -371,7 +520,6 @@ void bidi_tag_tolerant_fribidi_l2v(	FriBidiChar *in,int len,
 	/* Not forget to free */
 	utl_free(embed_tmp);
 	utl_free(in_tmp);
-	utl_free(is_command);
 }
 
 #endif
@@ -384,14 +532,15 @@ void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,
 	int i,size;
 	
 	const char *tag;
-	
-
+	char *is_command;
 	
 	
 	len=bidi_strlen(in);
 	
+	is_command=(char*)utl_malloc(len);
+	
 #ifdef SMART_FRIBIDI	
-	bidi_tag_tolerant_fribidi_l2v(in,len,is_heb,bidi_embed);
+	bidi_tag_tolerant_fribidi_l2v(in,len,is_heb,bidi_embed,is_command);
 #else
 	{
 		FriBidiCharType direction;
@@ -423,7 +572,9 @@ void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,
 			bidi_add_str_c(out,&new_len,limit,TAG_CLOSE);
 			brakets--;
 		}
-		if((new_level & 1)!=0 && (tag=bidi_mirror(in+i,&size,replace_minus))!=NULL){
+		if((new_level & 1)!=0 && (tag=bidi_mirror(in+i,&size,replace_minus))!=NULL
+			&& !is_command[i])
+		{
 			/* Replace charrecter with its mirror only in case
 			 * we are in RTL direction */
 			
@@ -441,6 +592,7 @@ void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,
 		bidi_add_str_c(out,&new_len,limit,TAG_CLOSE);
 		brakets--;
 	}
+	utl_free(is_command);
 }
 
 /* Main line processing function */

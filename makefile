@@ -1,5 +1,5 @@
 TR=biditex
-SRC=bidi.c  biditex.c  io.c
+SRC=bidi.c  biditex.c  io.c util.c
 OBJ := $(patsubst %.c,%.o,$(SRC))
 INSTPATH=/usr/local/bin/
 
@@ -30,5 +30,3 @@ uninstall:
 	rm "$(INSTPATH)$(TR)"
 
 -include .depend
-
-
