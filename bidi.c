@@ -36,7 +36,7 @@ bidi_cmd_t *bidi_command_list;
 
 #endif
 
-enum { MODE_BIDIOFF, MODE_BIDION };
+enum { MODE_BIDIOFF, MODE_BIDION, MODE_BIDILTR };
 
 
 static int bidi_mode;
@@ -75,6 +75,7 @@ static const char *bidi_hack_list[][2] =
 #define TAG_BIDI_ON			"%BIDION"
 #define TAG_BIDI_OFF		"%BIDIOFF"
 #define TAG_BIDI_NEW_TAG	"%BIDITAG"
+#define TAG_BIDI_LTR		"%BIDILTR"
 
 #define TAG_RTL			"\\R{"
 #define TAG_LTR			"\\L{"
@@ -598,7 +599,7 @@ void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,
 /* Main line processing function */
 int bidi_process(FriBidiChar *in,FriBidiChar *out,int replace_minus)
 {
-	int i;
+	int i,is_heb;
 	if(bidi_strieq_u_a(in,TAG_BIDI_ON)) {
 		bidi_mode = MODE_BIDION;
 		return 0;
@@ -608,14 +609,20 @@ int bidi_process(FriBidiChar *in,FriBidiChar *out,int replace_minus)
 		bidi_mode = MODE_BIDIOFF;
 		return 0;
 	}
+	if(bidi_strieq_u_a(in,TAG_BIDI_LTR)) {
+		bidi_mode = MODE_BIDILTR;
+		return 0;
+	}
+
 #ifdef SMART_FRIBIDI	
 	if(bidi_strieq_u_a(in,TAG_BIDI_NEW_TAG)) {
 		bidi_add_command_u(in+strlen(TAG_BIDI_NEW_TAG));
 		return 0;
 	}
 #endif
-	if(bidi_mode == MODE_BIDION) {
-		bidi_add_tags(in,out,MAX_LINE_SIZE,TRUE,replace_minus);
+	if(bidi_mode != MODE_BIDIOFF) {
+		is_heb = (bidi_mode == MODE_BIDION);
+		bidi_add_tags(in,out,MAX_LINE_SIZE, is_heb ,replace_minus);
 	}
 	else {
 		for(i=0;in[i];i++){
@@ -637,7 +644,7 @@ void bidi_finish(void)
 		utl_free(tmp);
 	}
 #endif
-	if(bidi_mode == MODE_BIDION) {
+	if(bidi_mode != MODE_BIDIOFF) {
 		fprintf(stderr,"Warning: No %%BIDIOFF Tag at the end of the file\n");
 	}
 }
@@ -648,5 +655,7 @@ void bidi_init(void)
 #ifdef SMART_FRIBIDI
 	bidi_add_command("begin");
 	bidi_add_command("end");	
+	bidi_add_command("R");
+	bidi_add_command("L");
 #endif
 }
