@@ -1,5 +1,7 @@
 #include "defines.h"
 #include "bidi.h"
+#include "util.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,6 +12,15 @@
 #ifndef FALSE
 #define FALSE 0
 #endif
+
+#ifndef min
+#define min(x,y) ((x) < (y) ? (x) : (y))
+#endif 
+
+#ifndef max
+#define max(x,y) ((x) > (y) ? (x) : (y))
+#endif 
+
 
 /***********************/
 /* Global Data */
@@ -120,29 +131,29 @@ static void bidi_add_str_c(FriBidiChar *out,int *new_len,
 /* Function looks if the first charrecter or sequence 
  * in "in" is mirrored charrecter and returns its mirrot
  * in this case. If it is not mirrored then returns NULL */
+static const char *bidi_one_mirror(FriBidiChar *in,int *size,
+								const char *list[][2])
+{
+	int pos=0;
+	while(list[pos][0]) {
+		if(bidi_strieq_u_a(in,list[pos][0])) {
+			*size=strlen(list[pos][0]);
+			return list[pos][1];
+		}
+		pos++;
+	}
+	return NULL;
+}
 
 static const char *bidi_mirror(FriBidiChar *in,int *size,
 								int replace_minus)
 {
-	int pos=0;
-	while(bidi_mirror_list[pos][0]) {
-		if(bidi_strieq_u_a(in,bidi_mirror_list[pos][0])) {
-			*size=strlen(bidi_mirror_list[pos][0]);
-			return bidi_mirror_list[pos][1];
-		}
-		pos++;
+	const char *ptr;
+	if((ptr=bidi_one_mirror(in,size,bidi_mirror_list))!=NULL) {
+		return ptr;
 	}
-
-	if(!replace_minus) {
-		return NULL;
-	}
-	pos=0;
-	while(bidi_hack_list[pos][0]) {
-		if(bidi_strieq_u_a(in,bidi_hack_list[pos][0])) {
-			*size=strlen(bidi_hack_list[pos][0]);
-			return bidi_hack_list[pos][1];
-		}
-		pos++;
+	if(replace_minus) {
+		return bidi_one_mirror(in,size,bidi_hack_list);
 	}
 	return NULL;
 }
@@ -162,11 +173,10 @@ void bidi_add_command(char *name)
 {
 	bidi_cmd_t *new_cmd;
 	char *new_text;
-	if(!(new_cmd=(bidi_cmd_t*)malloc(sizeof(bidi_cmd_t)))
-		|| !(new_text=(char*)malloc(strlen(name)+1))) {
-		fprintf(stderr,"Out of memory\n");
-		exit(1);
-	}
+	
+	new_cmd=(bidi_cmd_t*)utl_malloc(sizeof(bidi_cmd_t));
+	new_text=(char*)utl_malloc(strlen(name)+1);
+	
 	new_cmd->next=bidi_command_list;
 	new_cmd->name=new_text;
 	strcpy(new_text,name);
@@ -251,32 +261,62 @@ int bidi_is_command(FriBidiChar *text,int *command_length)
 	return 1;
 }
 
+/* This function parses the text "in" in marks places that
+ * should be ignored by fribidi in "is_command" as true */
+
+void bidi_mark_commands(FriBidiChar *in,int len,char *is_command,int is_heb)
+{
+	int i,j,cmd_len;
+	for(i=0;i<len;i+=cmd_len) {
+		if(bidi_is_command(in+i,&cmd_len)) {
+			for(j=0;j<cmd_len;j++) {
+				is_command[i+j]=TRUE;
+			}
+		}
+		else {
+			is_command[i]=FALSE;
+			cmd_len = 1;
+		}
+	}
+}
+
+
+/* This function marks embedding levels at for text "in",
+ * it ignores different tags */
 void bidi_tag_tolerant_fribidi_l2v(	FriBidiChar *in,int len,
-									FriBidiCharType *direction,
+									int is_heb,
 									FriBidiLevel *embed)
 {
-	int in_pos,out_pos,length,i;
+	int in_pos,out_pos,cmd_len,i;
 	FriBidiChar *in_tmp;
-	FriBidiLevel *embed_tmp;
-	FriBidiLevel fill_level;
+	FriBidiLevel *embed_tmp,fill_level;
+	char *is_command;
+	FriBidiCharType direction;
+
+	if(is_heb)
+		direction = FRIBIDI_TYPE_RTL;
+	else
+		direction = FRIBIDI_TYPE_LTR;
 	
-	fill_level=bidi_basic_level( *direction == FRIBIDI_TYPE_RTL);
+	in_tmp=(FriBidiChar*)utl_malloc(sizeof(FriBidiChar)*(len+1));
+	embed_tmp=(FriBidiLevel*)utl_malloc(sizeof(FriBidiLevel)*len);
+	is_command=(char*)utl_malloc(len);
 	
-	in_tmp=(FriBidiChar*)malloc(sizeof(FriBidiChar)*(len+1));
-	embed_tmp=(FriBidiLevel*)malloc(sizeof(FriBidiLevel)*len);
+	/**********************************************
+	 * This is main parser that marks commands    *
+	 * across the text i.e. marks non text        *
+	 **********************************************/
+	bidi_mark_commands(in,len,is_command,is_heb);
 	
-	if(!in_tmp || !embed_tmp) {
-		fprintf(stderr,"Out of memory\n");
-		exit(1);
-	}
-	
-	/* Copy all the data without tags */
+	/**********************************************/
+	/* Copy all the data without tags for fribidi */
+	/**********************************************/
 	in_pos=0;
 	out_pos=0;
 
 	while(in_pos<len) {
-		if(bidi_is_command(in+in_pos,&length)){
-			in_pos+=length;
+		if(is_command[in_pos]){
+			in_pos++;
 			continue;
 		}
 		/* Copy to buffer */
@@ -285,16 +325,38 @@ void bidi_tag_tolerant_fribidi_l2v(	FriBidiChar *in,int len,
 		in_pos++;
 	}
 	
+	/***************
+	 * RUN FRIBIDI *
+	 ***************/
+	
 	/* Note - you must take the new size for firibidi */
-	fribidi_log2vis_get_embedding_levels(in_tmp,out_pos,direction,embed_tmp);
+	fribidi_log2vis_get_embedding_levels(in_tmp,out_pos,&direction,embed_tmp);
 
-	/* Return the tags (or neutral embedding) */
+	/****************************************************
+	 * Return the tags and fill missing embedding level *
+	 ****************************************************/
 	in_pos=0;
 	out_pos=0;
 
 	while(in_pos<len) {
-		if(bidi_is_command(in+in_pos,&length)){
-			for(i=0;i<length;i++){
+		if(is_command[in_pos]){
+			/* Find the length of the part that 
+			 * has */
+			for(cmd_len=0;in_pos+cmd_len<len;cmd_len++) {
+				if(!is_command[cmd_len+in_pos])
+					break;
+			}
+			
+			if(in_pos == 0 || in_pos + cmd_len == len){
+				/* When we on start/end assume basic direction */
+				fill_level = bidi_basic_level(is_heb);
+			}
+			else {
+				/* Fill with minimum on both sides */
+				fill_level = min ( embed[out_pos - 1] , embed[out_pos] );
+			}
+			
+			for(i=0;i<cmd_len;i++){
 				embed[in_pos]=fill_level;
 				in_pos++;
 			}
@@ -307,8 +369,9 @@ void bidi_tag_tolerant_fribidi_l2v(	FriBidiChar *in,int len,
 	}
 
 	/* Not forget to free */
-	free(embed_tmp);
-	free(in_tmp);
+	utl_free(embed_tmp);
+	utl_free(in_tmp);
+	utl_free(is_command);
 }
 
 #endif
@@ -322,16 +385,19 @@ void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,
 	
 	const char *tag;
 	
-	FriBidiCharType direction;
 
-	direction = is_heb ? FRIBIDI_TYPE_RTL : FRIBIDI_TYPE_LTR;
+	
 	
 	len=bidi_strlen(in);
 	
 #ifdef SMART_FRIBIDI	
-	bidi_tag_tolerant_fribidi_l2v(in,len,&direction,bidi_embed);
+	bidi_tag_tolerant_fribidi_l2v(in,len,is_heb,bidi_embed);
 #else
-	fribidi_log2vis_get_embedding_levels(in,len,&direction,bidi_embed);
+	{
+		FriBidiCharType direction;
+		direction = is_heb ? FRIBIDI_TYPE_RTL : FRIBIDI_TYPE_LTR;
+		fribidi_log2vis_get_embedding_levels(in,len,&direction,bidi_embed);
+	}
 #endif
 
 	level=bidi_basic_level(is_heb);
@@ -415,8 +481,8 @@ void bidi_finish(void)
 	while(bidi_command_list) {
 		tmp=bidi_command_list;
 		bidi_command_list=bidi_command_list->next;
-		free(tmp->name);
-		free(tmp);
+		utl_free(tmp->name);
+		utl_free(tmp);
 	}
 #endif
 	if(bidi_mode == MODE_BIDION) {
