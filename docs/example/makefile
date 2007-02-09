@@ -15,6 +15,7 @@ $(TARGET).ps: $(TARGET).dvi
 
 $(TARGET).dvi: $(TARGET).tex
 	$(LATEX) $(TARGET).tex
+	$(LATEX) $(TARGET).tex
 
 $(TARGET).tex: $(SRC).tex
 	biditex -m $(SRC).tex | iconv -f utf8 -t cp1255 >$(TARGET).tex
