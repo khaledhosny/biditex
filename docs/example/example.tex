@@ -1,0 +1,110 @@
+\documentclass{article}
+
+\usepackage[cp1255]{inputenc}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% You can use both cp1255 and utf8 encoding     %
+% however for utf8 you need include ucs package %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage[english,hebrew]{babel}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% You can use    "hebfont":                   %
+%   IvriTeX David CLM glyphs as default font  %
+% Or you can use "culmus":                    %
+%   Nikud  Frank Ruehl gluphs as default font %
+%   with following restrictions:              %
+%     - You can not use utf8 encoding         %
+%     - You must use latex->dvips->ps2pdf     %
+%       sequence in order to get output file  %
+%       You also must use ghostscript 7.07    %
+%       later versions fail to convert texts  %
+%                                             %
+%      You can not use them together          %
+%                                             %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% For IvriTeX you need following definition %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{hebfont}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% For Nikud you need following definitions %
+% They are commented out by default.       %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% \usepackage{culmus}
+%
+% \HeblatexRedefineL
+% %  This is requred to enable \L{...}
+% %  sequence
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% English fonts in hebrew text %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{newcent}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This forces LaTeX use bolder fonts for   %
+% English that look better together with   %
+% Hebrew. Also it is recommended to use it %
+% with Nikud package                       %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% LaTeX do not support hyphenation 
+% for Hebrew so it is good idea to use 
+% this definition to prevent text
+% outside the normal layout
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\global\emergencystretch = .8\hsize
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Now we start document in Hebrew 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%BIDION
+\title{שימוש ב-BiDiTeX}
+\author{ארתיום בייליס (טונקיך)}
+\begin{document}
+\maketitle
+\section{דוגמאות לשימוש.}
+עכשיו אפשר לכתוב טקסט בעברית שמשולב עם אנגלית בצורה נורמלית: "Some english" ועכשיו מספרים 1, 2, 3. ועכשיו סוגרים (עגולים) [מרובעים] או \{מסולסלים\} או אפילו סימני "<>". הכל עובד. כמו כן, אפשר לשלב תגים שונים כמו \emph{הדגשה} וזה לא יפריע או אפשר אפילו לשלב בצורה כזהו: "Long english \emph{text} with italic".
+
+%BIDILTR
+\unsethebrew
+\section{English - אנגלית.}
+
+You can also write in English and insert some Hebrew inside, for example -- you can insert a word ``שלום" or any other text and it will be treated correctly. However in this case you should use tag \%BIDILTR in order to make it work.
+
+\sethebrew
+%BIDION
+\section{נוסחאות.}
+כמו כן, ניתן לשלב נוסחאות קצרות בתוך הטקסט כמו $e=mc^2$ וזה יטופל באופן נכון. אבל אם רוצים לכתוב נוסחה מסובכת במספר שורות או כל דבר מסובך אחר יש לבטל את מנגנון הכיווניות:
+
+%BIDIOFF
+\begin{equation} \label{eq:myequ}
+\forall{x}.\forall{y}.f(x+y)=f(x) \cdot f(y)  \to 
+f(x)=e^x=\sum^{\infty}_{n=0}{\frac{x^n}{n!}}
+\end{equation}
+%BIDION
+ולאחר מכן ניתן להחזיר אותו מחדש.
+
+יש לשים לב שבד"כ כל התוכן של פקודות מטופל\footnote{הכוונה לתוכן שנמצא בין הסוגריים -- הפרמטרים של הפקודה} -- פרט לפקודות מיוחדות כמו begin, end, L, R. במידה ורוצים לגרום ל-biditex להתעלם מתוכן פקודות מסיימות -- לדגומה תוכן של תג ref, אז צריך לסמן זאת ל-biditex ע"י תג BIDITAG\%.
+
+
+%BIDITAG ref
+
+אחרי הגדרת התג ניתן להתייחס לנוסחה (\ref{eq:myequ}) שדיברנו עליה
+
+\end{document}
+%BIDIOFF
