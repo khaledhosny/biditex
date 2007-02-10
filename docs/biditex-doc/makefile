@@ -1,19 +1,20 @@
 TARGET=bidi-doc-heb
 SRC=bidi-doc
 LATEX=latex
+P2P=ps2pdf
 
 all: pdf
 
 pdf: $(TARGET).pdf
 
 $(TARGET).pdf: $(TARGET).ps
-	ps2pdf $(TARGET).ps
-	
+	$(P2P) $(TARGET).ps
 
 $(TARGET).ps: $(TARGET).dvi
 	dvips $(TARGET)
 
 $(TARGET).dvi: $(TARGET).tex
+	$(LATEX) $(TARGET).tex
 	$(LATEX) $(TARGET).tex
 
 $(TARGET).tex: $(SRC).tex
