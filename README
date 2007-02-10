@@ -13,15 +13,22 @@ Installation:
 
 Requirements:
 -------------
- libfribidi-dev
+
+ libfribidi
+ 
+ Under Debain and Ubuntu you need following packages in
+ order to build biditex: 
+  - libfribidi-dev 
+  - build-essential
+  
 
 Install:
 --------
 
  As user run:
- $ make
+   make
  Then as superuser
- # make install
+   make install
  
  If you want to use a path different from
  the default /usr/local/bin/ you need to
@@ -31,4 +38,4 @@ Uninstall:
 ----------
 
  As superuser
- # make uninstall
+   make uninstall
