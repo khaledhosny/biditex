@@ -1,0 +1,46 @@
+Installation:
+============
+
+--------------------------------
+Linux/*NIX - with libfribidi-dev
+--------------------------------
+
+If the system includes libfribidi
+development files just go to biditex
+library just do make and copy executable
+to the place you need to type make install
+
+
+-------------------------------
+Cygwin or other *NIX platforms:
+-------------------------------
+Download fribidi-0.10.7 for the official
+side, install it. Than install normally
+as it done for normal platform
+
+
+---------------------------------------------------
+Cross compiling to w32 platform on Linux or Windows
+using mingw32 compiler
+---------------------------------------------------
+It assumes that you use i586-mingw32msvc-gcc
+compiler. It uses fribidi library from fribidi 
+directory (original libfribidi has some compilation
+problems).
+
+Type "make -f makefile.mingw32" to build, then copy
+executable to place you need.
+
+If you use mingw32 compiler (other name)
+Edit
+/biditex/makefile.mingw32
+/fribidi/makefile
+
+and change 
+
+i586-mingw32msvc-gcc
+i586-mingw32msvc-ar
+i586-mingw32msvc-ranlib
+
+to the correct names on your system
+
