@@ -1,8 +1,10 @@
 TR=biditex
 SRC=bidi.c  biditex.c  io.c util.c
 OBJ := $(patsubst %.c,%.o,$(SRC))
-INSTPATH=/usr/local/bin/
-
+MAN=biditex.1
+INSTPATH=/usr/local
+BINPATH=$(INSTPATH)/bin/
+MANPATH=$(INSTPATH)/share/man/man1/
 
 LIBS = `fribidi-config --libs`
 CC = gcc
@@ -24,9 +26,11 @@ depend:
 	$(CC) -M $(SRC) > .depend
 
 install: $(TR)
-	cp $(TR) $(INSTPATH)
+	cp $(TR) $(BINPATH)
+	cp ../docs/man/$(MAN) $(MANPATH)
 
 uninstall:
-	rm "$(INSTPATH)$(TR)"
+	rm -f "$(BINPATH)$(TR)"
+	rm -f "$(MANPATH)$(MAN)"
 
 -include .depend
