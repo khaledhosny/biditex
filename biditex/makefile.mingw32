@@ -1,0 +1,34 @@
+TR=biditex.exe
+SRC=bidi.c  biditex.c  io.c util.c
+OBJ := $(patsubst %.c,%.o,$(SRC))
+INSTPATH=/usr/local/bin/
+
+
+LIBS = -L ../fribidi -lfribidi
+CC = i586-mingw32msvc-gcc
+CFLAGS = -O2 -Wall -g -I..
+
+
+all: $(TR)
+
+$(TR) : $(OBJ) ../fribidi/libfribidi.a
+	$(CC) -o $(TR) $(OBJ) $(LIBS) 
+
+../fribidi/libfribidi.a:
+	cd ../fribidi/ ; make
+
+.c.o:
+	$(CC) -c $(CFLAGS) $<
+
+clean:
+	cd ../fribidi ; make clean
+	rm -f $(OBJ) $(TR) .depend
+
+
+install: $(TR)
+	cp $(TR) $(INSTPATH)
+
+uninstall:
+	rm "$(INSTPATH)$(TR)"
+
+-include .depend

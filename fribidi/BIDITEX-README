@@ -1,0 +1,13 @@
+BiDiTeX Notes
+=============
+
+The libfribidi was changed in order to compile in win32 platform.
+
+This is stripped version of fribidi library. It is used
+for cross compilation to win32 platform using mingw32 compiler.
+
+FRIBIDI_API definitiom was changed to empty for WIN32 due to 
+compilation problems
+
+Artyom
+
