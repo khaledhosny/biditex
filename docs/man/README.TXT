@@ -27,9 +27,8 @@ OPTIONS
 	      the  \emdash and \endash issue in Culmus David font that is sup
 	      ported with ivritex.
 
-
-       SEE ALSO
-	      The documentation of the biditex - biditex-doc.pdf
+SEE ALSO
+       The documentation of the biditex - biditex-doc.pdf
 
 BUGS
        TBD
