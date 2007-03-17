@@ -2,7 +2,7 @@ TARGET=biditex-doc
 SRC=biditex
 LATEX=latex
 P2P=ps2pdf
-BIDITEX=../../biditex/biditex
+BIDITEX=wine ../../biditex/biditex.exe
 
 
 all: pdf
