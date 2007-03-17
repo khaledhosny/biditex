@@ -18,7 +18,7 @@ $(TARGET).dvi: $(TARGET).tex
 	$(LATEX) $(TARGET).tex
 
 $(TARGET).tex: $(SRC).tex
-	biditex -m $(SRC).tex | iconv -f utf8 -t cp1255 >$(TARGET).tex
+	biditex -e utf8 -t cp1255 -m $(SRC).tex -o $(TARGET).tex
 
 clean: 
 	rm -f $(TARGET).dvi $(TARGET).ps $(TARGET).tex $(TARGET).log $(TARGET).aux $(TARGET).cot $(TARGET).pdf

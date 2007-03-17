@@ -45,19 +45,6 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% English fonts in hebrew text %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\usepackage{newcent}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% This forces LaTeX use bolder fonts for   %
-% English that look better together with   %
-% Hebrew. Also it is recommended to use it %
-% with Nikud package                       %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % LaTeX do not support hyphenation 
 % for Hebrew so it is good idea to use 
@@ -71,24 +58,31 @@
 % Now we start document in Hebrew 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% We can add our own tags 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%BIDIDICTAG אנגלית unsethebrew
+%BIDIDICTAG עברית sethebrew
 
 %BIDION
-\title{שימוש ב-BiDiTeX}
-\author{ארתיום בייליס (טונקיך)}
-\begin{document}
-\maketitle
-\section{דוגמאות לשימוש.}
-עכשיו אפשר לכתוב טקסט בעברית שמשולב עם אנגלית בצורה נורמלית: "Some english" ועכשיו מספרים 1, 2, 3. ועכשיו סוגרים (עגולים) [מרובעים] או \{מסולסלים\} או אפילו סימני "<>". הכל עובד. כמו כן, אפשר לשלב תגים שונים כמו \emph{הדגשה} וזה לא יפריע או אפשר אפילו לשלב בצורה כזהו: "Long english \emph{text} with italic".
+\כותרת{שימוש ב-BiDiTeX}
+\מחבר{ארתיום בייליס (טונקיך)}
+\התחל{מסמך}
+\צורכותרת
+\סעיף{דוגמאות לשימוש.}
+עכשיו אפשר לכתוב טקסט בעברית שמשולב עם אנגלית בצורה נורמלית: "Some english" ועכשיו מספרים 1, 2, 3. ועכשיו סוגרים (עגולים) [מרובעים] או \{מסולסלים\} או אפילו סימני "<>". הכל עובד. כמו כן, אפשר לשלב תגים שונים כמו \הדגש{הדגשה} וזה לא יפריע או אפשר אפילו לשלב בצורה כזהו: "Long english \emph{text} with italic".
 
 %BIDILTR
-\unsethebrew
+\אנגלית
+%כמובן ניתן להשתמש גם בתגים באנגלית ובעברית באותה מידה
 \section{English - אנגלית.}
 
 You can also write in English and insert some Hebrew inside, for example -- you can insert a word ``שלום" or any other text and it will be treated correctly. However in this case you should use tag \%BIDILTR in order to make it work.
 
-\sethebrew
+\עברית
 %BIDION
-\section{נוסחאות.}
+\סעיף{נוסחאות.}
 כמו כן, ניתן לשלב נוסחאות קצרות בתוך הטקסט כמו $e=mc^2$ וזה יטופל באופן נכון. אבל אם רוצים לכתוב נוסחה מסובכת במספר שורות או כל דבר מסובך אחר יש לבטל את מנגנון הכיווניות:
 
 %BIDIOFF
@@ -99,12 +93,13 @@ f(x)=e^x=\sum^{\infty}_{n=0}{\frac{x^n}{n!}}
 %BIDION
 ולאחר מכן ניתן להחזיר אותו מחדש.
 
-יש לשים לב שבד"כ כל התוכן של פקודות מטופל\footnote{הכוונה לתוכן שנמצא בין הסוגריים -- הפרמטרים של הפקודה} -- פרט לפקודות מיוחדות כמו begin, end, L, R. במידה ורוצים לגרום ל-biditex להתעלם מתוכן פקודות מסיימות -- לדגומה תוכן של תג ref, אז צריך לסמן זאת ל-biditex ע"י תג BIDITAG\%.
+יש לשים לב שבד"כ כל התוכן של פקודות מטופל\הערתשוליים{הכוונה לתוכן שנמצא בין הסוגריים -- הפרמטרים של הפקודה} -- פרט לפקודות מיוחדות כמו begin, end, L, R. במידה ורוצים לגרום ל-biditex להתעלם מתוכן פקודות מסיימות -- לדגומה תוכן של תג ref, אז צריך לסמן זאת ל-biditex ע"י תג BIDITAG\%.
 
 
 %BIDITAG ref
 
-אחרי הגדרת התג ניתן להתייחס לנוסחה (\ref{eq:myequ}) שדיברנו עליה
+אחרי הגדרת התג ניתן להתייחס לנוסחה (\ראה{eq:myequ}) שדיברנו עליה
 
+% We can use both english and hebrew tags
 \end{document}
 %BIDIOFF
