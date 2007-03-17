@@ -1,4 +1,5 @@
-INSTPATH=/usr/local
+INSTPATH=/usr
+#INSTPATH=/usr/local
 
 all:
 	cd biditex ; make
