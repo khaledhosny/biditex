@@ -15,7 +15,13 @@ is given standard input is used.
 Output file name.
 .TP
 .B \-e utf8 | iso8859-8 | cp1255
-Source and target encoding. Default encoding is UTF-8.
+Set source encoding. Default encoding is UTF-8.
+.TP
+.B \-t utf8 | iso8859-8 | cp1255
+Set target encoding. Default encoding is source encoding.
+.TP
+.B \-d
+Translate only, do not add bidirectional tags. Useful for latex2html.
 .TP
 .B \-m
 Replace '\-\-'  and  '---' by '\\L{\-\-}' and '\\L{\-\-\-}'. This fixes the \\emdash and \\endash
