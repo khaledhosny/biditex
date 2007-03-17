@@ -5,6 +5,12 @@
 #include "io.h"
 
 static char text_buffer[MAX_LINE_SIZE];
+int io_line_number;
+
+void io_init(void)
+{
+	io_line_number=0;
+}
 
 int io_read_line(FriBidiChar *text,int encoding,FILE *f)
 {
@@ -12,8 +18,14 @@ int io_read_line(FriBidiChar *text,int encoding,FILE *f)
 	if(fgets(text_buffer,MAX_LINE_SIZE-1,f)==NULL) {
 		return 0;
 	}
+	
 	len_char=strlen(text_buffer);
+	
+	if(len_char==MAX_LINE_SIZE - 2) {
+		fprintf(stderr,"Warning: line %d is too long\n",io_line_number+1);
+	}
 	if(len_char>0 && text_buffer[len_char-1]=='\n') {
+		io_line_number++;
 		text_buffer[len_char-1]=0;
 		len_char--;
 	}

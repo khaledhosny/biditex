@@ -70,7 +70,8 @@ module.include.files=\
 	bidi.h\
 	io.h\
 	defines.h\
-	util.h
+	util.h\
+	dict.h
 
 module.source.name=.
 module.source.type=
@@ -78,7 +79,9 @@ module.source.files=\
 	biditex.c\
 	io.c\
 	bidi.c\
-	util.c
+	util.c\
+	dict.c\
+	makefile
 
 module.pixmap.name=.
 module.pixmap.type=

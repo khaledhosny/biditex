@@ -17,28 +17,33 @@ void help(void)
 			"usage: biditex [ parameters ] [ inputfilename ]\n"
 			"       -o file_name.tex             - output file name\n"
 			"       -e utf8 | iso8859-8 | cp1255 - encoding\n"
-			"       -m                 replace '--'  &   '---'\n"
-			"                          by   '\\L{--} & \\L{'---'}\n"
+			"       -t utf8 | iso8859-8 | cp1255 - output encoding\n"
+			"       -d       transalte only - not apply bidi\n"
+			"                this is usefull for latex2html that has native\n"
+			"                bidirectional support\n"
+			"       -m       replace '--'  &   '---'\n"
+			"                by   '\\L{--} & \\L{'---'}\n"
 	);
 	exit(1);
 }
 
 
-/* Read cmd line parameters
- * following are supported 
- * -o output file name
- * -e utf8 | iso8859-8 | cp1255
- * inputfilename */
+/* Read cmd line parameters */
 void read_parameters(int argc,char **argv,
 					char **fname_in,char **fname_out,
-					int *encoding,int *replace_minus)
+					int *encoding,int *out_encoding,
+					int *replace_minus,int *transalte_only)
 {
 	int i;
-	int cnt1=0,cnt2=0,cnt3=0;
+	int cnt1=0,cnt2=0,cnt3=0,cnt4=0;
+	int *ptr;
 	
 	for(i=1;i<argc;i++){
 		if(strcmp(argv[i],"-h")==0) {
 			help();
+		}
+		else if(strcmp(argv[i],"-d")==0) {
+			*transalte_only = 1;
 		}
 		else if(strcmp(argv[i],"-m")==0) {
 			*replace_minus = 1;
@@ -51,31 +56,39 @@ void read_parameters(int argc,char **argv,
 			*fname_out = argv[i];
 			cnt1++;
 		}
-		else if(strcmp(argv[i],"-e")==0) {
-			i++;
-			if(i>=argc){
+		else if(strcmp(argv[i],"-e")==0 || strcmp(argv[i],"-t")==0) {
+			if(i+1>=argc){
 				help();
 			}
+			
+			if(argv[i][1]=='e'){
+				ptr=encoding;
+				cnt2++;
+			}
+			else{
+				ptr=out_encoding;
+				cnt4++;
+			}
+			i++;
 			if(strcmp(argv[i],"utf8")==0) {
-				*encoding=ENC_UTF_8;
+				*ptr=ENC_UTF_8;
 			}
 			else if(strcmp(argv[i],"cp1255")==0) {
-				*encoding=ENC_CP1255;
+				*ptr=ENC_CP1255;
 			}
 			else if(strcmp(argv[i],"iso8859-8")==0) {
-				*encoding=ENC_ISO_8859_8;
+				*ptr=ENC_ISO_8859_8;
 			}
 			else {
 				help();
 			}
-			cnt2++;
 		}
 		else {
 			*fname_in=argv[i];
 			cnt3++;
 		}
 	}
-	if(cnt1>1 || cnt2>1 || cnt3>1){
+	if(cnt1>1 || cnt2>1 || cnt3>1 || cnt4>1){
 		help();
 	}
 }
@@ -91,8 +104,9 @@ static FriBidiChar text_line_out[MAX_LINE_SIZE];
 int main(int argc,char **argv)
 {
 	char *fname_in=NULL,*fname_out=NULL;
-	int encoding=ENC_DEFAULT;
+	int encoding=ENC_DEFAULT,out_encoding = -1;
 	int replace_minus = 0;
+	int transalte_only = 0;
 
 	FILE *f_in,*f_out;
 	
@@ -100,7 +114,12 @@ int main(int argc,char **argv)
 	 * Inicialization * 
 	 ******************/
 		
-	read_parameters(argc,argv,&fname_in,&fname_out,&encoding,&replace_minus);
+	read_parameters(argc,argv,&fname_in,&fname_out,
+			&encoding,&out_encoding,
+			&replace_minus,&transalte_only);
+	if(out_encoding == -1) {
+		out_encoding = encoding;
+	}
 
 	if(!fname_in) {
 		f_in = stdin;
@@ -128,12 +147,15 @@ int main(int argc,char **argv)
 	 * Main loop *
 	 *************/
 	
+	io_init();
 
 	while(io_read_line(text_line_in,encoding,f_in)) {
 		
-		if(bidi_process(text_line_in,text_line_out,replace_minus)) {
+		if(bidi_process(text_line_in,text_line_out,
+							replace_minus,transalte_only))
+		{
 			/*If there is something to print */
-			io_write_line(text_line_out,encoding,f_out);
+			io_write_line(text_line_out,out_encoding,f_out);
 		}
 		
 	}
