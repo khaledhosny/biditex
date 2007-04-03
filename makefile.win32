@@ -12,11 +12,9 @@ clean:
 	cd docs/biditex-doc ; make clean
 	cd docs/man ; make clean
 	rm -fr biditex-win32
-	rm -fr biditex-win32.zip
 
 zip:
 	mkdir biditex-win32
-	cd biditex-win32
 	cp docs/copyright biditex-win32/copyright-biditex.txt
 	cp biditex/README-WIN32 biditex-win32
 	cp fribidi/COPYING biditex-win32/COPYING-FRIBIDI
@@ -26,5 +24,6 @@ zip:
 	unix2dos biditex-win32/*
 	cp docs/man/README.TXT biditex-win32/USAGE.TXT
 	cp biditex/biditex.exe biditex-win32
+	cp biditex-doc.pdf biditex-win32/
 	zip biditex-win32 biditex-win32/*
 	
