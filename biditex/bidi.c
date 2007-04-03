@@ -27,7 +27,6 @@
 /***********************/
 /* Global Data */
 
-#ifdef SMART_FRIBIDI
 typedef struct COMMAND {
 	char *name;
 	struct COMMAND *next;
@@ -35,8 +34,6 @@ typedef struct COMMAND {
 	bidi_cmd_t;
 
 bidi_cmd_t *bidi_command_list;
-
-#endif
 
 enum { MODE_BIDIOFF, MODE_BIDION, MODE_BIDILTR };
 
@@ -66,8 +63,8 @@ static const char *bidi_mirror_list[][2] =
 
 static const char *bidi_hack_list[][2] = 
 {
-	{"---","\\L{---}"},
-	{"--","\\L{--}"},
+	{"---","{\\textemdash}"},
+	{"--","{\\textendash}"},
 	{NULL,NULL}
 };
 
@@ -85,6 +82,8 @@ static const char *bidi_hack_list[][2] =
 #define TAG_RTL			"\\R{"
 #define TAG_LTR			"\\L{"
 #define TAG_CLOSE		"}"
+
+#define TAG_LTR_NUM		"\\Lnum{"
 
 /***********************/
 
@@ -174,8 +173,6 @@ int bidi_basic_level(int is_heb)
 	return 0;
 }
 
-#ifdef SMART_FRIBIDI
-
 void bidi_add_command(char *name)
 {
 	bidi_cmd_t *new_cmd;
@@ -195,33 +192,6 @@ int bidi_is_cmd_char(FriBidiChar ch)
 	if( ('a'<= ch && ch <='z') || ('A' <=ch && ch <= 'Z') )
 		return 1;
 	return 0;
-}
-
-void bidi_add_command_u(FriBidiChar *text)
-{
-	char buffer[MAX_COMMAND_LEN];
-	int len=0;
-	if(*text!=' ' && *text!='\t') {
-		fprintf(stderr,"Tag definition should have space: line %d\n",io_line_number);
-		exit(1);
-	}
-	while(*text==' ' || *text=='\t') {
-		text++;
-	}
-	if(!bidi_is_cmd_char(*text)) {
-		fprintf(stderr,"Syntaxis error: line %d\n",io_line_number);
-	}
-	while(bidi_is_cmd_char(*text) && len < MAX_COMMAND_LEN-1) {
-		buffer[len]=*text;
-		text++;
-		len++;
-	}
-	if(len>=MAX_COMMAND_LEN-1) {
-		fprintf(stderr,"Tag is too long: line %d\n",io_line_number);
-		exit(1);
-	}
-	buffer[len]=0;
-	bidi_add_command(buffer);
 }
 
 /* Verirfies wether then text of length "len" is
@@ -528,7 +498,24 @@ void bidi_tag_tolerant_fribidi_l2v(	FriBidiChar *in,int len,
 	utl_free(in_tmp);
 }
 
-#endif
+int bidi_only_number(FriBidiLevel *levels,FriBidiChar *string)
+{
+	FriBidiChar ch;
+	while(*string && (*levels & 1)==0 ) {
+		ch=*string;
+		if(ch>127) { /* other forigen language */
+			return 0;
+		}
+		if(('a'<=ch && ch<='z') || ('A'<=ch && ch<='Z')) {
+			/* Find latin charrecters */
+			return 0;
+		}
+		string++;
+		levels++;
+	}
+	return 1;
+}
+
 
 /* The function that parses line and adds required \R \L tags */
 void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,
@@ -536,6 +523,7 @@ void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,
 {
 	int len,new_len,level,new_level,brakets;
 	int i,size;
+	int is_number_env=0;
 	
 	const char *tag;
 	char *is_command;
@@ -545,15 +533,7 @@ void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,
 	
 	is_command=(char*)utl_malloc(len);
 	
-#ifdef SMART_FRIBIDI	
 	bidi_tag_tolerant_fribidi_l2v(in,len,is_heb,bidi_embed,is_command);
-#else
-	{
-		FriBidiCharType direction;
-		direction = is_heb ? FRIBIDI_TYPE_RTL : FRIBIDI_TYPE_LTR;
-		fribidi_log2vis_get_embedding_levels(in,len,&direction,bidi_embed);
-	}
-#endif
 
 	level=bidi_basic_level(is_heb);
 	
@@ -565,8 +545,15 @@ void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,
 
 		if(new_level>level) {
 			/* LTR Direction according to odd/even value of level */
+			is_number_env=FALSE;
 			if((new_level & 1) == 0) {
-				tag=TAG_LTR;
+				if(bidi_only_number(bidi_embed+i,in+i)){
+					tag=TAG_LTR_NUM;
+					is_number_env=TRUE;
+				}
+				else {
+					tag=TAG_LTR;
+				}
 			}
 			else {
 				tag=TAG_RTL;
@@ -578,13 +565,29 @@ void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,
 			bidi_add_str_c(out,&new_len,limit,TAG_CLOSE);
 			brakets--;
 		}
-		if((new_level & 1)!=0 && (tag=bidi_mirror(in+i,&size,replace_minus))!=NULL
-			&& !is_command[i])
+		
+		if(
+			(new_level & 1)!=0 
+			&& !is_command[i]
+			&& (tag=bidi_mirror(in+i,&size,replace_minus))!=NULL)
 		{
 			/* Replace charrecter with its mirror only in case
 			 * we are in RTL direction */
-			
+		 
 			/* Note this can be a sequence like "\{" */
+			bidi_add_str_c(out,&new_len,limit,tag);
+			i+=size-1;
+		}
+		else if(
+			(new_level & 1)!=1
+			&& is_number_env
+			&& replace_minus
+			&& !is_command[i]
+			&& (tag=bidi_one_mirror(in+i,&size,bidi_hack_list))!=NULL)
+		{
+			/* Replace "--/---" with a tag "\tex{en|em}dash" only in LTR
+			 * direction only if this is nubmers environment */
+			
 			bidi_add_str_c(out,&new_len,limit,tag);
 			i+=size-1;
 		}
@@ -605,9 +608,10 @@ void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,
 /* T R A N S L A T I O N */
 /*************************/
 
-static void bidi_warrning(char *text)
+static void bidi_error(char *text)
 {
-	fprintf(stderr,"WARRNING in line %d: `%s'\n",io_line_number,text);
+	fprintf(stderr,"ERROR in line %d: `%s'\n",io_line_number,text);
+	exit(1);
 }
 
 
@@ -625,7 +629,7 @@ static int is_hebrew_tag(FriBidiChar buffer[MAX_COMMAND_LEN],FriBidiChar **ptr)
 			size++;
 		}
 		else {
-			bidi_warrning("Hebrew tag is too long");
+			bidi_error("Hebrew tag is too long");
 			return FALSE;
 		}
 	}
@@ -707,7 +711,7 @@ static const char *is_heb_word(FriBidiChar **ptr,trans_func_t tras_func)
 			return trans;
 		}
 		else {
-			bidi_warrning("Unknown hebrew tag - not translated");
+			bidi_error("Unknown hebrew tag - not translated");
 			return NULL;
 		}
 	}
@@ -786,22 +790,80 @@ void bidi_translate_tags(FriBidiChar *in,FriBidiChar *out,int limit)
 	
 }
 
-void bidi_add_dic_entry(FriBidiChar *str,int type)
+void bidi_grammar_skip_blank(FriBidiChar **ptr)
 {
-	FriBidiChar uni_buffer[MAX_COMMAND_LEN];
-	char ascii_buffer[MAX_COMMAND_LEN];
+	FriBidiChar ch;
+	while((ch=**ptr)==' ' || ch=='\t' || ch=='\r' || ch=='\n')
+		++*ptr;
+}
+
+/*
+ * format is following:
+ * "lh" - latin word, hebrew word,
+ * "l" - one latin word
+ * parameters are (FriBidiChar *) for h and (char *) for l
+ */
+int bidi_grammar(FriBidiChar *in,char *tagname,char *format,
+					FriBidiChar hebrew[MAX_COMMAND_LEN],
+					char ascii[MAX_COMMAND_LEN])
+{
+	if(!bidi_strieq_u_a(in,tagname)) {
+		return 0;
+	}
 	
-	if(
-		(*str==' ' || *str!='\t') && str++
-		&& is_hebrew_tag(uni_buffer,&str)
-		&& (*str==' ' || *str!='\t') && str++
-		&& is_ascii_tag(ascii_buffer,&str))
-	{
-		dict_add_tans(uni_buffer,ascii_buffer,type);
+	in+=strlen(tagname);
+	
+	bidi_grammar_skip_blank(&in);
+
+	while(*format) {
+		if(*format=='h'){
+			if(!is_hebrew_tag(hebrew,&in)){
+				bidi_error("Hebrew word expected");
+			}
+		}
+		else if(*format == 'l') {
+			if(!is_ascii_tag(ascii,&in)){
+				bidi_error("Latin word expected");
+			}
+		}
+		else {
+			fprintf(stderr,"Internall error\n");
+			exit(1);
+		}
+		format++;
+		bidi_grammar_skip_blank(&in);
+	}
+	if(*in!=0) {
+		bidi_error("Unexpected charrecter");
+	}
+	return 1;
+}
+
+void bidi_parse_biditex_command(FriBidiChar *in)
+{
+	FriBidiChar unicode[MAX_COMMAND_LEN];
+	char ascii[MAX_COMMAND_LEN];
+	
+	if(bidi_grammar(in,TAG_BIDI_ON,"",NULL,NULL)) {
+		bidi_mode = MODE_BIDION;
+	}
+	else if(bidi_grammar(in,TAG_BIDI_OFF,"",NULL,NULL)) {
+		bidi_mode = MODE_BIDIOFF;
+	}
+	else if(bidi_grammar(in,TAG_BIDI_LTR,"",NULL,NULL)) {
+		bidi_mode = MODE_BIDILTR;
+	}
+	else if(bidi_grammar(in,TAG_BIDI_NEW_TAG,"l",NULL,ascii)) {
+		bidi_add_command(ascii);
+	}
+	else if(bidi_grammar(in,TAG_BIDI_DIC_TAG,"hl",unicode,ascii)) {
+		dict_add_tans(unicode,ascii,DICT_TAG);
+	}
+	else if(bidi_grammar(in,TAG_BIDI_DIC_ENV,"hl",unicode,ascii)) {
+		dict_add_tans(unicode,ascii,DICT_ENV);
 	}
 	else {
-		fprintf(stderr,"Error in line %d: Syntaxis - tag definition\n",
-					io_line_number);
+		bidi_error("Unknown biditex command");
 	}
 }
 
@@ -814,37 +876,11 @@ int bidi_process(FriBidiChar *in,FriBidiChar *out,
 						int replace_minus,int tranlate_only)
 {
 	int i,is_heb;
-	if(bidi_strieq_u_a(in,TAG_BIDI_ON)) {
-		bidi_mode = MODE_BIDION;
-		return 0;
-	}
 	
-	if(bidi_strieq_u_a(in,TAG_BIDI_OFF)) {
-		bidi_mode = MODE_BIDIOFF;
+	if(bidi_strieq_u_a(in,"%BIDI")) {
+		bidi_parse_biditex_command(in);
 		return 0;
 	}
-	if(bidi_strieq_u_a(in,TAG_BIDI_LTR)) {
-		bidi_mode = MODE_BIDILTR;
-		return 0;
-	}
-
-#ifdef SMART_FRIBIDI	
-	if(bidi_strieq_u_a(in,TAG_BIDI_NEW_TAG)) {
-		bidi_add_command_u(in+strlen(TAG_BIDI_NEW_TAG));
-		return 0;
-	}
-#endif
-	
-	if(bidi_strieq_u_a(in,TAG_BIDI_DIC_TAG)) {
-		bidi_add_dic_entry(in+sizeof(TAG_BIDI_DIC_TAG)-1,DICT_TAG);
-		return 0;
-	}
-
-	if(bidi_strieq_u_a(in,TAG_BIDI_DIC_ENV)) {
-		bidi_add_dic_entry(in+sizeof(TAG_BIDI_DIC_ENV)-1,DICT_ENV);
-		return 0;
-	}
-
 	
 	if(bidi_mode != MODE_BIDIOFF) {
 		is_heb = (bidi_mode == MODE_BIDION);
@@ -872,7 +908,6 @@ int bidi_process(FriBidiChar *in,FriBidiChar *out,
 
 void bidi_finish(void)
 {
-#ifdef SMART_FRIBIDI
 	bidi_cmd_t *tmp;
 	while(bidi_command_list) {
 		tmp=bidi_command_list;
@@ -880,19 +915,24 @@ void bidi_finish(void)
 		utl_free(tmp->name);
 		utl_free(tmp);
 	}
-#endif
 	if(bidi_mode != MODE_BIDIOFF) {
 		fprintf(stderr,"Warning: No %%BIDIOFF Tag at the end of the file\n");
 	}
 }
 
-void bidi_init(void)
+void bidi_init(FILE *f_out)
 {
+	/*******************************************
+	 * Ugly support of \Lnum{...} tag - fix me *
+	 *******************************************/
+	
+	fprintf(f_out,"\\def\\Lnum#1{\\beginL #1\\endL}\n");
+
 	bidi_mode = MODE_BIDIOFF;
-#ifdef SMART_FRIBIDI
+
 	bidi_add_command("begin");
 	bidi_add_command("end");	
 	bidi_add_command("R");
 	bidi_add_command("L");
-#endif
+	bidi_add_command("Lnum");
 }

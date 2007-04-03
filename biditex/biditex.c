@@ -141,13 +141,14 @@ int main(int argc,char **argv)
 		}
 	}
 	
-	bidi_init();
 	
 	/*************
 	 * Main loop *
 	 *************/
 	
 	io_init();
+
+	bidi_init(f_out);
 
 	while(io_read_line(text_line_in,encoding,f_in)) {
 		
