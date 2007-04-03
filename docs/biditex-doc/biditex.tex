@@ -44,7 +44,9 @@
 \התחל{מסמך}
 \צורכותרת
 \התחל{תקציר}
-זהו מסמך תיעוד לשימוש ב-\BiDiTeX{} -- תוסף ל-\LaTeX, שמאפשר תמיכה אוטומטית בכיווניות במסמכים בעברית. הוא נועד לעבוד יחד עם חבילת ivritex -- החבילה שמוסיפה תמיכה בעברית ב-\LaTeX. מסמך זה נבנה תוך שימוש ב-\BiDiTeX{} ומהווה הדגמה של יכולותיו. הוא מופץ תחת רישיון ייחוס-שיתוף זהה 1.0 ישראל של Creative Commons ו-GFDL.
+מסמך זה תיעוד לשימוש ב-\BiDiTeX{} -- תוסף ל-\LaTeX, שמספק תמיכה אוטומטית בכיווניות למסמכים בעברית. הוא תוכנן לעבוד יחד עם חבילת ivritex -- החבילה שמוסיפה תמיכה בעברית ל-\LaTeX.
+
+מסמך זה נבנה תוך שימוש ב-\BiDiTeX{} ומהווה הדגמה של יכולותיו. הוא מופץ תחת רישיון ייחוס-שיתוף זהה 1.0 ישראל של Creative Commons ו-GFDL.
 \סיים{תקציר}
 
 \tableofcontents
@@ -156,6 +158,7 @@ The meaning of word "שלום" is peace.\\
 \caption{רשימת התגים המתורגמים\label{alltags}}
 \center{
 %BIDILTR
+\unsethebrew
 \begin{tabular}{|l|r|}
 \hline
 \R{תג באגנלית} & \R{תג בעברית} \\
@@ -182,6 +185,7 @@ footnote & הערתשוליים \\
 \hline
 %BIDION
 \end{tabular}
+\sethebrew
 }
 \end{table}
 
@@ -190,12 +194,13 @@ footnote & הערתשוליים \\
 \caption{רשימת הסביבות המתורגמות\label{allenvs}}
 \center{
 %BIDILTR
+\unsethebrew
 \begin{tabular}{|l|r|}
 \hline
 \R{תג באגנלית} & \R{תג בעברית} \\
 \hline
 
-itemize & פירוט \\
+\L{itemize} & פירוט \\
 description & תיאור \\
 enumerate & מספור \\
 verse & שיר \\
@@ -205,6 +210,7 @@ abstract & תקציר \\
 \hline
 %BIDION
 \end{tabular}
+\sethebrew
 }
 \end{table}
 
