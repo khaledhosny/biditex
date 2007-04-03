@@ -1,6 +1,11 @@
 #!/bin/bash
 
-VER="0.0.5"
+if [ "$1" == "" ]; then
+	echo usage version 
+	echo    for example ./releasescript 0.0.5
+	exit 1;
+fi
+VER="$1"
 
 sudo dpkg -P biditex
 
