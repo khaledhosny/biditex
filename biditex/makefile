@@ -1,5 +1,5 @@
 TR=biditex
-SRC=bidi.c biditex.c dict.c io.c util.c
+SRC=bidi.c biditex.c dict.c io.c util.c ignore.c
 OBJ := $(patsubst %.c,%.o,$(SRC))
 MAN=biditex.1
 INSTPATH=/usr/local

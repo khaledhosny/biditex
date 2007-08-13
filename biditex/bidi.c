@@ -2,6 +2,7 @@
 #include "bidi.h"
 #include "util.h"
 #include "dict.h"
+#include "ignore.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -173,7 +174,7 @@ int bidi_basic_level(int is_heb)
 	return 0;
 }
 
-void bidi_add_command(char *name)
+void bidi_add_command(const char *name)
 {
 	bidi_cmd_t *new_cmd;
 	char *new_text;
@@ -922,6 +923,7 @@ void bidi_finish(void)
 
 void bidi_init(FILE *f_out)
 {
+	int i;
 	/*******************************************
 	 * Ugly support of \Lnum{...} tag - fix me *
 	 *******************************************/
@@ -929,10 +931,14 @@ void bidi_init(FILE *f_out)
 	fprintf(f_out,"\\def\\Lnum#1{\\beginL #1\\endL}\n");
 
 	bidi_mode = MODE_BIDIOFF;
+	
+	for(i=0;ignore_tags_list[i][0];i++) {
+		bidi_add_command(ignore_tags_list[i]);
+	}
 
-	bidi_add_command("begin");
+/*	bidi_add_command("begin");
 	bidi_add_command("end");	
 	bidi_add_command("R");
 	bidi_add_command("L");
-	bidi_add_command("Lnum");
+	bidi_add_command("Lnum");*/
 }

@@ -1,5 +1,5 @@
 TR=biditex.exe
-SRC=bidi.c dict.c biditex.c  io.c util.c
+SRC=bidi.c dict.c biditex.c  io.c util.c ignore.c
 OBJ := $(patsubst %.c,%.o,$(SRC))
 INSTPATH=/usr/local/bin/
 
