@@ -212,11 +212,45 @@ int bidi_in_cmd_list(FriBidiChar *text,int len)
 	}
 	return 0;
 }
+
+
+/* Find special charrecters */
+int bidi_is_latex_special_char(FriBidiChar *text)
+{
+	if(text[0]!='\\')
+		return FALSE;
+	/* Special charrecters according to lshort.pdf
+	 *	# $ % ^ & _ { } ~ \, "{}" should be mirrored
+	 * thus not included to the list */
+	switch (text[1]) {
+		case '#' :
+		case '$' :
+		case '%' :
+		case '^' :
+		case '&' :
+		case '_' :
+		case '\\':
+			return TRUE;
+		default :
+			return FALSE;
+	}
+	
+}
+
+
 /*Verifies wether the next string is command 
  * ie: "\\[a-zA-Z]+" or "\\[a-zA-Z]+\*" */
 int bidi_is_command(FriBidiChar *text,int *command_length)
 {
 	int len;
+	
+	if(bidi_is_latex_special_char(text)) {
+		/* Charrecters like \\ or \$ that should be treated
+		 * as `commands' */
+		*command_length=2;
+		return TRUE;
+	}
+	
 	if(*text != '\\' || !bidi_is_cmd_char(text[1])) {
 		return FALSE;
 	}
@@ -364,13 +398,8 @@ void bidi_mark_commands(FriBidiChar *in,int len,char *is_command,int is_heb)
 			pos+=cmd_len;
 			continue;
 		}
-		else if((symbol=='\\' && in[pos+1]=='\\') || symbol=='$' ) {
-			if(symbol == '$') {
-				cmd_len=bidi_calc_equation(in+pos);
-			}
-			else {
-				cmd_len = 2;
-			}
+		else if(symbol=='$') {
+			cmd_len=bidi_calc_equation(in+pos);
 			
 			for(i=0;i<cmd_len;i++) {
 				is_command[i+pos]=TRUE;
