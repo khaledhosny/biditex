@@ -71,7 +71,8 @@ module.include.files=\
 	io.h\
 	defines.h\
 	util.h\
-	dict.h
+	dict.h\
+	ignore.h
 
 module.source.name=.
 module.source.type=
@@ -81,7 +82,8 @@ module.source.files=\
 	bidi.c\
 	util.c\
 	dict.c\
-	makefile
+	makefile\
+	ignore.c
 
 module.pixmap.name=.
 module.pixmap.type=
