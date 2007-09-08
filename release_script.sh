@@ -7,17 +7,17 @@ if [ "$1" == "" ]; then
 fi
 VER="$1"
 
-sudo dpkg -P biditex
+dpkg -P biditex
 
 make clean
 make -f makefile.win32 clean
 
 make
-sudo checkinstall --pkgname=biditex --pkgversion=$VER \
+checkinstall --pkgname=biditex --pkgversion=$VER \
 	--pkglicense=GPL --pkggroup=text --nodoc  \
 	"--maintainer=Artyom Tonkikh (artyomtnk@yahoo.com)"
 
-sudo alien --to-rpm biditex_$VER-1_i386.deb
+alien --to-rpm biditex_$VER-1_i386.deb
 
 #backup docs before clean
 cp docs/biditex-doc/biditex-doc.pdf .
