@@ -1,0 +1,14 @@
+# KDevelop Custom Project File List
+bidi.c
+bidi.h
+biditex.c
+defines.h
+dict.c
+dict.h
+ignore.c
+ignore.h
+io.c
+io.h
+makefile
+util.c
+util.h
