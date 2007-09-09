@@ -1,6 +1,8 @@
 INSTPATH=/usr
 #INSTPATH=/usr/local
 
+TEXMF=/usr/share/texmf
+
 all:
 	cd biditex ; make
 	cd docs/biditex-doc ; make
@@ -19,6 +21,9 @@ install:
 	cp docs/copyright  $(INSTPATH)/share/doc/biditex
 	cp docs/example/example.tex $(INSTPATH)/share/doc/biditex/example
 	cp docs/example/makefile $(INSTPATH)/share/doc/biditex/example
+	mkdir $(TEXMF)/tex/latex/biditex
+	cp biditex/biditex.sty $(TEXMF)/tex/latex/biditex/
+	mktexlsr
 
 
 uninstall:
@@ -30,3 +35,6 @@ uninstall:
 	rm -f $(INSTPATH)/share/doc/biditex/biditex-doc.pdf
 	rm -f $(INSTPATH)/share/doc/biditex/copyright
 	rmdir $(INSTPATH)/share/doc/biditex
+	rm -fr $(TEXMF)/tex/latex/biditex
+	mktexlsr
+
