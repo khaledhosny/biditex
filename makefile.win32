@@ -21,6 +21,7 @@ zip:
 	cp fribidi/AUTHORS biditex-win32/AUTHORTH-FRIBIDI
 	cp fribidi/BIDITEX-README biditex-win32/BIDITEX-FRIBIDI-README
 	cp docs/example/example.tex biditex-win32
+	cp biditex/biditex.sty biditex-win32
 	unix2dos biditex-win32/*
 	cp docs/man/README.TXT biditex-win32/USAGE.TXT
 	cp biditex/biditex.exe biditex-win32
