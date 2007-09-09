@@ -43,6 +43,7 @@ dict_t dict_utf8_tags_perm[] =
 	{ L"ראה", "ref" },
 	{ L"הערתשוליים", "footnote" },
 	{ L"צטט", "cite" },
+	{ L"נקודות", "ldots" },
 };
 
 dict_t dict_utf8_envs_perm[] = 
