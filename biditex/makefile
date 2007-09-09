@@ -36,7 +36,7 @@ install: $(TR)
 uninstall:
 	rm -f "$(BINPATH)$(TR)"
 	rm -f "$(MANPATH)$(MAN)"
-	rmdir -fr $(TEXMF)/tex/latex/biditex
+	rm -fr $(TEXMF)/tex/latex/biditex
 	mktexlsr
 
 
