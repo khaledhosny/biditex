@@ -8,6 +8,10 @@ fi
 VER="$1"
 
 dpkg -P biditex
+rm biditex_*.deb
+rm biditex_*.rpm
+rm biditex_*.tar.gz
+rm biditex-w32.zip
 
 make clean
 make -f makefile.win32 clean
@@ -15,6 +19,7 @@ make -f makefile.win32 clean
 make
 checkinstall --pkgname=biditex --pkgversion=$VER \
 	--pkglicense=GPL --pkggroup=text --nodoc  \
+	--install=no \
 	"--maintainer=Artyom Tonkikh (artyomtnk@yahoo.com)" \
 	make instdeb
 
