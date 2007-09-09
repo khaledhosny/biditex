@@ -8,22 +8,22 @@ fi
 VER="$1"
 
 dpkg -P biditex
-rm biditex_*.deb
-rm biditex_*.rpm
 rm biditex_*.tar.gz
-rm biditex-w32.zip
+rm -f *w32.zip *.deb *.rpm
+rm -f backup-*-pre-biditex.tgz
 
 make clean
 make -f makefile.win32 clean
 
 make
-checkinstall --pkgname=biditex --pkgversion=$VER \
+checkinstall -D --pkgname=biditex --pkgversion=$VER \
 	--pkglicense=GPL --pkggroup=text --nodoc  \
 	--install=no \
-	"--maintainer=Artyom Tonkikh (artyomtnk@yahoo.com)" \
+	'--maintainer=artyomtnk@yahoo.com' \
 	make instdeb
 
-alien --to-rpm biditex_$VER-1_i386.deb
+alien --scripts --to-rpm biditex_$VER-1_*.deb
+
 
 #backup docs before clean
 cp docs/biditex-doc/biditex-doc.pdf .
@@ -39,4 +39,8 @@ rm biditex-doc.pdf
 rm -f backup*.tgz
 make -f makefile.win32 clean
 
-tar -Xexcl.txt -czvvf biditex_$VER.tar.gz .
+svn export . biditex_$VER
+
+tar -czvf biditex_$VER.tar.gz biditex_$VER
+
+rm -fr biditex_$VER

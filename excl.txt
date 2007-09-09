@@ -1,6 +1,0 @@
-.svn
-*.deb
-*.rpm
-*.zip
-*.tar.gz
-
