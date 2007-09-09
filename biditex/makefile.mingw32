@@ -27,6 +27,7 @@ clean:
 
 install: $(TR)
 	cp $(TR) $(INSTPATH)
+	cp biditex.sty $(INSTPATH)
 
 uninstall:
 	rm "$(INSTPATH)$(TR)"

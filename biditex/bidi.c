@@ -64,8 +64,8 @@ static const char *bidi_mirror_list[][2] =
 
 static const char *bidi_hack_list[][2] = 
 {
-	{"---","{\\textemdash}"},
-	{"--","{\\textendash}"},
+	{"---","{\\bidiemdash}"},
+	{"--","{\\bidiendash}"},
 	{NULL,NULL}
 };
 
@@ -953,11 +953,6 @@ void bidi_finish(void)
 void bidi_init(FILE *f_out)
 {
 	int i;
-	/*******************************************
-	 * Ugly support of \Lnum{...} tag - fix me *
-	 *******************************************/
-	
-	fprintf(f_out,"\\def\\Lnum#1{\\beginL #1\\endL}\n");
 
 	bidi_mode = MODE_BIDIOFF;
 	
@@ -965,9 +960,4 @@ void bidi_init(FILE *f_out)
 		bidi_add_command(ignore_tags_list[i]);
 	}
 
-/*	bidi_add_command("begin");
-	bidi_add_command("end");	
-	bidi_add_command("R");
-	bidi_add_command("L");
-	bidi_add_command("Lnum");*/
 }

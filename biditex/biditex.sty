@@ -1,0 +1,11 @@
+\def\Lnum#1{\beginL #1\endL}
+
+\newcommand{\bidiendash}{\textendash}
+\newcommand{\bidiemdash}{\textemdash}
+
+\newcommand{\bididashfont}[1]{
+	\renewcommand{\bidiendash}{\fontfamily{#1}\selectfont--}
+	\renewcommand{\bidiemdash}{\fontfamily{#1}\selectfont---}
+}
+
+
