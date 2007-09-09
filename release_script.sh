@@ -15,7 +15,8 @@ make -f makefile.win32 clean
 make
 checkinstall --pkgname=biditex --pkgversion=$VER \
 	--pkglicense=GPL --pkggroup=text --nodoc  \
-	"--maintainer=Artyom Tonkikh (artyomtnk@yahoo.com)"
+	"--maintainer=Artyom Tonkikh (artyomtnk@yahoo.com)" \
+	make instdeb
 
 alien --to-rpm biditex_$VER-1_i386.deb
 

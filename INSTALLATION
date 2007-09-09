@@ -5,6 +5,18 @@ Installation:
 Linux/*NIX - with libfribidi-dev
 --------------------------------
 
+brief installation
+------------------
+make
+make install
+
+brief uninstallation
+--------------------
+make uninstall
+
+
+More:
+
 If the system includes libfribidi
 development files just go to biditex
 library just do make and copy executable
