@@ -39,6 +39,7 @@ dict_t dict_utf8_tags_perm[] =
 	{ L"תתתתסעיף", "subsubsection"},
 	{ L"הדגש", "emph" },
 	{ L"פריט", "item" },
+	{ L"נק", "item" },
 	{ L"תג", "label" },
 	{ L"ראה", "ref" },
 	{ L"הערתשוליים", "footnote" },
