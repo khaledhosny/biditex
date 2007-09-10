@@ -37,12 +37,7 @@ install: installfiles
 uninstallfiles:
 	rm -f $(INSTPATH)/bin/biditex
 	rm -f $(INSTPATH)/share/man/man1/biditex.1
-	rm -f $(INSTPATH)/share/doc/biditex/example/example.tex
-	rm -f $(INSTPATH)/share/doc/biditex/example/makefile
-	rmdir $(INSTPATH)/share/doc/biditex/example
-	rm -f $(INSTPATH)/share/doc/biditex/biditex-doc.pdf
-	rm -f $(INSTPATH)/share/doc/biditex/copyright
-	rmdir $(INSTPATH)/share/doc/biditex
+	rm -fr $(INSTPATH)/share/doc/biditex
 	rm -fr $(TEXMF)/tex/latex/biditex
 
 uninstall: uninstallfiles
