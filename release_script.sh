@@ -7,9 +7,13 @@ if [ "$1" == "" ]; then
 fi
 VER="$1"
 
-dpkg -P biditex
+if [ "`dpkg -l biditex | awk '/biditex/{print $1}'`" == "ii" ] ; then
+	echo First remove biditex package
+	exit 1
+fi
+
 rm biditex_*.tar.gz
-rm -f *w32.zip *.deb *.rpm
+rm -f *win32.zip *.deb *.rpm
 rm -f backup-*-pre-biditex.tgz
 
 make clean
@@ -38,6 +42,8 @@ make -f makefile.win32 zip
 rm biditex-doc.pdf
 rm -f backup*.tgz
 make -f makefile.win32 clean
+
+mv biditex-win32.zip biditex_$VER-win32.zip
 
 svn export . biditex_$VER
 
