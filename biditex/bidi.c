@@ -547,6 +547,15 @@ int bidi_only_number(FriBidiLevel *levels,FriBidiChar *string)
 }
 
 
+/* Mark Unicode  LRM & RLM charrecters */
+int bidi_is_directional_mark(FriBidiChar c)
+{
+	if(c==0x200F || c==0x200E) {
+		return 1;
+	}
+	return 0;
+}
+
 /* The function that parses line and adds required \R \L tags */
 void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,
 					int is_heb,int replace_minus)
@@ -620,6 +629,10 @@ void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,
 			
 			bidi_add_str_c(out,&new_len,limit,tag);
 			i+=size-1;
+		}
+		else if(bidi_is_directional_mark(in[i])){
+			/* Do nothing -- erase marks that are 
+			 * not actual charrecters and thus not presented in fonts */
 		}
 		else {
 			bidi_add_char_u(out,&new_len,limit,in[i]);
