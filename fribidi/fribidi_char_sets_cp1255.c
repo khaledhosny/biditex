@@ -33,6 +33,9 @@
 #define CP1255_SOF_PASUQ 0xD3
 #define CP1255_DOUBLE_VAV 0xD4
 #define CP1255_GERSHAYIM 0xD8
+#define CP1255_LRM 253
+#define CP1255_RLM 254
+
 
 #define UNI_ALEF 0x05D0
 #define UNI_TAV 0x05EA
@@ -40,6 +43,8 @@
 #define UNI_SOF_PASUQ 0x05C3
 #define UNI_DOUBLE_VAV 0x05F0
 #define UNI_GERSHAYIM 0x05F4
+#define UNI_LRM 0x200E
+#define UNI_RLM 0x200F
 
 FriBidiChar fribidi_cp1255_to_unicode_tab[] = {	/* 0x80-0xBF */
   0x20AC, 0x81, 0x201A, 0x0192, 0x201E, 0x2026, 0x2020, 0x2021,
@@ -65,7 +70,10 @@ fribidi_cp1255_to_unicode_c (char sch)
   /* cp1256 specific chars */
   else if (ch >= 0x80 && ch <= 0xbf)
     return fribidi_cp1255_to_unicode_tab[ch - 0x80];
-  else
+  else if (ch == CP1255_LRM || ch == CP1255_RLM) 
+    return ch - CP1255_LRM + UNI_LRM;
+    /* treat LRM/LRM charrectes correctly */
+  else 
     return ch;
 }
 
@@ -90,6 +98,9 @@ fribidi_unicode_to_cp1255_c (FriBidiChar uch)
   if (uch >= UNI_DOUBLE_VAV && uch <= UNI_GERSHAYIM)
     return (char) (uch - UNI_DOUBLE_VAV + CP1255_DOUBLE_VAV);
   /* TODO: handle pre-composed and presentation chars */
+  if (uch == UNI_LRM || uch==UNI_RLM)
+    return (char) (uch - UNI_LRM + CP1255_LRM);
+    /* Treat LRM/RLM charrecters correctly */
   else if (uch < 256)
     return (char) uch;
   else
