@@ -9,7 +9,7 @@ MANPATH=$(INSTPATH)/share/man/man1/
 
 LIBS = `fribidi-config --libs`
 CC = gcc
-CFLAGS = -O2 -Wall -g `fribidi-config --cflags`
+CFLAGS = -O2 -Wall -g `fribidi-config --cflags` -DWORKAROUND_FRIBIDI_ENCODING_BUG
 
 
 all: $(TR)

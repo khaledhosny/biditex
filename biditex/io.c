@@ -36,6 +36,15 @@ int io_read_line(FriBidiChar *text,int encoding,FILE *f)
 			break;
 		case ENC_CP1255:
 			len_uni=fribidi_cp1255_to_unicode(text_buffer,len_char,text);
+#ifdef WORKAROUND_FRIBIDI_ENCODING_BUG
+			{
+				int i;
+				for(i=0;i<len_uni;i++) {
+					if(text[i]==253 || text[i]==254)
+						text[i] += (0x200E - 253);
+				}
+			}
+#endif
 			text[len_uni]=0;
 			break;
 		case ENC_UTF_8:
