@@ -28,7 +28,7 @@ installfiles:
 	cp docs/copyright  $(INSTPATH)/share/doc/biditex
 	cp docs/example/example.tex $(INSTPATH)/share/doc/biditex/example
 	cp docs/example/makefile $(INSTPATH)/share/doc/biditex/example
-	mkdir $(TEXMF)/tex/latex/biditex
+	mkdir -p $(TEXMF)/tex/latex/biditex
 	cp biditex/biditex.sty $(TEXMF)/tex/latex/biditex/
 
 install: installfiles
