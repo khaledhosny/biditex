@@ -28,8 +28,9 @@ depend:
 
 install: $(TR)
 	cp $(TR) $(BINPATH)
+	mkdir -p $(MANPATH)
 	cp ../docs/man/$(MAN) $(MANPATH)
-	mkdir $(TEXMF)/tex/latex/biditex
+	mkdir -p $(TEXMF)/tex/latex/biditex
 	cp biditex.sty $(TEXMF)/tex/latex/biditex/
 	mktexlsr
 
