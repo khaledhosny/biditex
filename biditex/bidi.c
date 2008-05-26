@@ -343,9 +343,8 @@ void bidi_state_on_right_sq_br(int top,int *after_command_state)
 		*after_command_state = ST_NORM;
 	}
 }
-
-/* Support of equations */
-int bidi_calc_equation(FriBidiChar *in)
+/* Using marks "$$" */
+int bidi_calc_equation_inline(FriBidiChar *in)
 {
 	int len=1;
 	while(in[len] && in[len]!='$') {
@@ -359,6 +358,30 @@ int bidi_calc_equation(FriBidiChar *in)
 	if(in[len]=='$')
 		len++;
 	return len;		
+}
+
+/* using \[ and \] marks */
+int bidi_calc_equation_display(FriBidiChar *in)
+{
+	int len=2;
+	while(in[len]){
+		if(in[len]=='\\' && in[len+1]=='\\')
+			len+=2;
+		else if(in[len]=='\\' && in[len+1]==']')
+			return len+2;
+		else
+			len++;
+	}
+	return len;
+}
+
+/* Support of equations */
+int bidi_calc_equation(FriBidiChar *in)
+{
+	if(*in=='$')
+		return bidi_calc_equation_inline(in);
+	else
+		return bidi_calc_equation_display(in);
 }
 
 /* This function parses the text "in" in marks places that
@@ -398,7 +421,7 @@ void bidi_mark_commands(FriBidiChar *in,int len,char *is_command,int is_heb)
 			pos+=cmd_len;
 			continue;
 		}
-		else if(symbol=='$') {
+		else if(symbol=='$' || (symbol=='\\' && in[pos+1]=='[')) {
 			cmd_len=bidi_calc_equation(in+pos);
 			
 			for(i=0;i<cmd_len;i++) {
