@@ -1,0 +1,4 @@
+The sources in this package includes two parts:
+1. Fribidi library published under LGPL: see fribidi/COPYING
+2. The sources and documentation of biditex program
+   for copyright notes see docs/copyright
