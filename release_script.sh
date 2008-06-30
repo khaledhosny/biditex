@@ -1,8 +1,8 @@
 #!/bin/bash
 
 if [ "$1" == "" ]; then
-	echo usage version 
-	echo    for example ./releasescript 0.0.5
+	echo 'usage version '
+	echo '   for example ./releasescript 0.0.5 [static]'
 	exit 1;
 fi
 VER="$1"
@@ -19,7 +19,12 @@ rm -f backup-*-pre-biditex.tgz
 make clean
 make -f makefile.win32 clean
 
-make
+if [ "$2" == "static" ]; then
+	make all_static
+else
+	make all
+fi
+
 checkinstall -D --pkgname=biditex --pkgversion=$VER \
 	--pkglicense=GPL --pkggroup=text --nodoc  \
 	--install=no \

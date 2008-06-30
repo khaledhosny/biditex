@@ -8,6 +8,11 @@ all:
 	cd biditex ; make
 	cd docs/biditex-doc ; make
 
+all_static:
+	cd biditex ; make all_static
+	cd docs/biditex-doc ; make
+	
+
 clean:
 	cd biditex ; make clean
 	cd docs/biditex-doc ; make clean

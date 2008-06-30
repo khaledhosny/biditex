@@ -14,6 +14,9 @@ CFLAGS = -O2 -Wall -g `fribidi-config --cflags` -DWORKAROUND_FRIBIDI_ENCODING_BU
 
 all: $(TR)
 
+all_static: $(OBJ)
+	$(CC) -o $(TR) $^ /usr/lib/libfribidi.a
+
 $(TR) : $(OBJ)
 	$(CC) -o $@ $^ $(LIBS)
 
