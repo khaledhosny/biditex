@@ -1,8 +1,8 @@
 ifeq ($(INSTPATH),)
-	INSTPATH=/usr/local
+	INSTPATH=$(DESTDIR)/usr
 endif
 
-TEXMF=/usr/share/texmf
+TEXMF=$(DESTDIR)/usr/share/texmf
 
 all:
 	cd biditex ; make
@@ -25,16 +25,19 @@ uninstdeb:
 	INSTPATH=/usr make uninstallfiles
 
 installfiles:
-	cp biditex/biditex $(INSTPATH)/bin
-	cp docs/man/biditex.1 $(INSTPATH)/share/man/man1
+	mkdir -p $(INSTPATH)/bin
+	mkdir -p $(INSTPATH)/share/doc/biditex/example
+	mkdir -p $(INSTPATH)/share/man/man1
+	cp -p biditex/biditex $(INSTPATH)/bin
+	cp -p docs/man/biditex.1 $(INSTPATH)/share/man/man1
 	mkdir -p $(INSTPATH)/share/doc/biditex
 	mkdir -p $(INSTPATH)/share/doc/biditex/example
-	cp docs/biditex-doc/biditex-doc.pdf $(INSTPATH)/share/doc/biditex
-	cp docs/copyright  $(INSTPATH)/share/doc/biditex
-	cp docs/example/example.tex $(INSTPATH)/share/doc/biditex/example
-	cp docs/example/makefile $(INSTPATH)/share/doc/biditex/example
+	cp -p docs/biditex-doc/biditex-doc.pdf $(INSTPATH)/share/doc/biditex
+	cp -p docs/copyright  $(INSTPATH)/share/doc/biditex
+	cp -p docs/example/example.tex $(INSTPATH)/share/doc/biditex/example
+	cp -p docs/example/makefile $(INSTPATH)/share/doc/biditex/example
 	mkdir -p $(TEXMF)/tex/latex/biditex
-	cp biditex/biditex.sty $(TEXMF)/tex/latex/biditex/
+	cp -p biditex/biditex.sty $(TEXMF)/tex/latex/biditex/
 
 install: installfiles
 	mktexlsr
