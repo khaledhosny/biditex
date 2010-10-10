@@ -7,9 +7,9 @@ TEXMF=/usr/share/texmf
 BINPATH=$(INSTPATH)/bin/
 MANPATH=$(INSTPATH)/share/man/man1/
 
-LIBS = `fribidi-config --libs`
+LIBS = $(FRIBIDI_LIBS) -lfribidi
 CC = gcc
-CFLAGS = -O2 -Wall -g `fribidi-config --cflags` -DWORKAROUND_FRIBIDI_ENCODING_BUG
+CFLAGS = $(FRIBIDI_CFLAGS) -O2 -Wall -g 
 
 
 all: $(TR)

@@ -31,12 +31,12 @@ int io_read_line(FriBidiChar *text,int encoding,FILE *f)
 	}
 	switch(encoding) {
 		case ENC_ISO_8859_8:
-			len_uni=fribidi_iso8859_8_to_unicode(text_buffer,len_char,text);
+			len_uni=fribidi_charset_to_unicode(FRIBIDI_CHAR_SET_ISO8859_8,text_buffer,len_char,text);
 			text[len_uni]=0;
 			break;
 		case ENC_CP1255:
-			len_uni=fribidi_cp1255_to_unicode(text_buffer,len_char,text);
-#ifdef WORKAROUND_FRIBIDI_ENCODING_BUG
+			len_uni=fribidi_charset_to_unicode(FRIBIDI_CHAR_SET_CP1255,text_buffer,len_char,text);
+#if ( FRIBIDI_MAJOR_VERSION * 100 + FRIBIDI_MINOR_VERSION ) <= 10 // 0.10
 			{
 				int i;
 				for(i=0;i<len_uni;i++) {
@@ -48,7 +48,7 @@ int io_read_line(FriBidiChar *text,int encoding,FILE *f)
 			text[len_uni]=0;
 			break;
 		case ENC_UTF_8:
-			len_uni=fribidi_utf8_to_unicode(text_buffer,len_char,text);
+			len_uni=fribidi_charset_to_unicode(FRIBIDI_CHAR_SET_UTF8,text_buffer,len_char,text);
 			text[len_uni]=0;
 			break;
 		default:
@@ -70,12 +70,12 @@ void io_write_line(FriBidiChar *text,int encoding,FILE *f)
 	}
 	
 	if(encoding == ENC_ISO_8859_8) {
-		char_len=fribidi_unicode_to_iso8859_8(text,len,text_buffer);
+		char_len=fribidi_unicode_to_charset(FRIBIDI_CHAR_SET_ISO8859_8,text,len,text_buffer);
 		text_buffer[char_len]=0;
 		fprintf(f,"%s\n",text_buffer);
 	}
 	else if(encoding == ENC_CP1255) {
-		char_len=fribidi_unicode_to_cp1255(text,len,text_buffer);
+		char_len=fribidi_unicode_to_charset(FRIBIDI_CHAR_SET_CP1255,text,len,text_buffer);
 		text_buffer[char_len]=0;
 		fprintf(f,"%s\n",text_buffer);
 	}
@@ -89,7 +89,7 @@ void io_write_line(FriBidiChar *text,int encoding,FILE *f)
 			else {
 				tmp_len = len;
 			}
-			char_len=fribidi_unicode_to_utf8(text,tmp_len,text_buffer);
+			char_len=fribidi_unicode_to_charset(FRIBIDI_CHAR_SET_UTF8,text,tmp_len,text_buffer);
 			text_buffer[char_len]=0;
 			fprintf(f,"%s",text_buffer);
 			len  -= tmp_len;

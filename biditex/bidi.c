@@ -460,6 +460,31 @@ void bidi_mark_commands(FriBidiChar *in,int len,char *is_command,int is_heb)
 	utl_free(parthness_stack);
 }
 
+#if ( FRIBIDI_MAJOR_VERSION * 100 + FRIBIDI_MINOR_VERSION ) > 10 // 0.10
+static void get_bidi_levels(FriBidiChar *in,int length,int is_heb,FriBidiLevel *embed)
+{
+	FriBidiCharType *types = utl_malloc(sizeof(FriBidiCharType)*length);
+	FriBidiParType direction = is_heb ? FRIBIDI_PAR_RTL : FRIBIDI_PAR_LTR;
+
+	fribidi_get_bidi_types(in,length,types);
+	fribidi_get_par_embedding_levels(types,length,&direction,embed);
+
+	utl_free(types);
+}
+
+#else // old fribidi
+static void get_bidi_levels(FriBidiChar *in,int length,int is_heb,FriBidiLevel *embed)
+{
+	FriBidiCharType direction;
+	if(is_heb)
+		direction = FRIBIDI_TYPE_RTL;
+	else
+		direction = FRIBIDI_TYPE_LTR;
+
+	fribidi_log2vis_get_embedding_levels(in,length,&direction,embed);
+}
+#endif
+
 /* This function marks embedding levels at for text "in",
  * it ignores different tags */
 void bidi_tag_tolerant_fribidi_l2v(	FriBidiChar *in,int len,
@@ -470,12 +495,6 @@ void bidi_tag_tolerant_fribidi_l2v(	FriBidiChar *in,int len,
 	int in_pos,out_pos,cmd_len,i;
 	FriBidiChar *in_tmp;
 	FriBidiLevel *embed_tmp,fill_level;
-	FriBidiCharType direction;
-
-	if(is_heb)
-		direction = FRIBIDI_TYPE_RTL;
-	else
-		direction = FRIBIDI_TYPE_LTR;
 	
 	in_tmp=(FriBidiChar*)utl_malloc(sizeof(FriBidiChar)*(len+1));
 	embed_tmp=(FriBidiLevel*)utl_malloc(sizeof(FriBidiLevel)*len);
@@ -508,7 +527,7 @@ void bidi_tag_tolerant_fribidi_l2v(	FriBidiChar *in,int len,
 	 ***************/
 	
 	/* Note - you must take the new size for firibidi */
-	fribidi_log2vis_get_embedding_levels(in_tmp,out_pos,&direction,embed_tmp);
+	get_bidi_levels(in_tmp,out_pos,is_heb,embed_tmp);
 
 	/****************************************************
 	 * Return the tags and fill missing embedding level *
