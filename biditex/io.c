@@ -48,7 +48,13 @@ int io_read_line(FriBidiChar *text,int encoding,FILE *f)
 			text[len_uni]=0;
 			break;
 		case ENC_UTF_8:
-			len_uni=fribidi_charset_to_unicode(FRIBIDI_CHAR_SET_UTF8,text_buffer,len_char,text);
+			if(len_char >= 3 && memcmp(text_buffer,"\xEF\xBB\xBF",3) == 0) {
+				// remove BOM, support Win32 Notepad
+				len_uni=fribidi_charset_to_unicode(FRIBIDI_CHAR_SET_UTF8,text_buffer+3,len_char-3,text);
+			}
+			else {
+				len_uni=fribidi_charset_to_unicode(FRIBIDI_CHAR_SET_UTF8,text_buffer,len_char,text);
+			}
 			text[len_uni]=0;
 			break;
 		default:
