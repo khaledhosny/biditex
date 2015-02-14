@@ -23,6 +23,8 @@ void help(void)
 			"                bidirectional support\n"
 			"       -m       replace '--'  &   '---'\n"
 			"                by   '\\L{--} & \\L{'---'}\n"
+			"       -n       no mirroring - do not mirror parethesis\n"
+			"                for engines that does that natively (like XeTeX)\n"
 	);
 	exit(1);
 }
@@ -32,7 +34,8 @@ void help(void)
 void read_parameters(int argc,char **argv,
 					char **fname_in,char **fname_out,
 					int *encoding,int *out_encoding,
-					int *replace_minus,int *transalte_only)
+					int *replace_minus,int *transalte_only,
+					int *no_mirroring)
 {
 	int i;
 	int cnt1=0,cnt2=0,cnt3=0,cnt4=0;
@@ -47,6 +50,9 @@ void read_parameters(int argc,char **argv,
 		}
 		else if(strcmp(argv[i],"-m")==0) {
 			*replace_minus = 1;
+		}
+		else if(strcmp(argv[i],"-n")==0) {
+			*no_mirroring = 1;
 		}
 		else if(strcmp(argv[i],"-o")==0) {
 			i++;
@@ -107,6 +113,7 @@ int main(int argc,char **argv)
 	int encoding=ENC_DEFAULT,out_encoding = -1;
 	int replace_minus = 0;
 	int transalte_only = 0;
+	int no_mirroring = 0;
 
 	FILE *f_in,*f_out;
 	
@@ -116,7 +123,8 @@ int main(int argc,char **argv)
 		
 	read_parameters(argc,argv,&fname_in,&fname_out,
 			&encoding,&out_encoding,
-			&replace_minus,&transalte_only);
+			&replace_minus,&transalte_only,
+			&no_mirroring);
 	if(out_encoding == -1) {
 		out_encoding = encoding;
 	}
@@ -153,7 +161,7 @@ int main(int argc,char **argv)
 	while(io_read_line(text_line_in,encoding,f_in)) {
 		
 		if(bidi_process(text_line_in,text_line_out,
-							replace_minus,transalte_only))
+							replace_minus,transalte_only,no_mirroring))
 		{
 			/*If there is something to print */
 			io_write_line(text_line_out,out_encoding,f_out);

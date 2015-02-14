@@ -5,7 +5,7 @@
 
 void bidi_init(FILE *f_out);
 int bidi_process(FriBidiChar *in,FriBidiChar *out,
-					int replace_minus,int tranlate_only);
+					int replace_minus,int tranlate_only,int no_mirroring);
 void bidi_finish(void);
 
 #endif

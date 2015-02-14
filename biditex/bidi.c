@@ -600,7 +600,7 @@ int bidi_is_directional_mark(FriBidiChar c)
 
 /* The function that parses line and adds required \R \L tags */
 void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,
-					int is_rtl,int replace_minus)
+					int is_rtl,int replace_minus,int no_mirroring)
 {
 	int len,new_len,level,new_level,brakets;
 	int i,size;
@@ -650,6 +650,7 @@ void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,
 		if(
 			(new_level & 1)!=0 
 			&& !is_command[i]
+			&& !no_mirroring
 			&& (tag=bidi_mirror(in+i,&size,replace_minus))!=NULL)
 		{
 			/* Replace charrecter with its mirror only in case
@@ -958,7 +959,7 @@ void bidi_parse_biditex_command(FriBidiChar *in)
 
 /* Main line processing function */
 int bidi_process(FriBidiChar *in,FriBidiChar *out,
-						int replace_minus,int tranlate_only)
+						int replace_minus,int tranlate_only,int no_mirroring)
 {
 	int i,is_rtl;
 	
@@ -979,7 +980,7 @@ int bidi_process(FriBidiChar *in,FriBidiChar *out,
 			
 			/* Apply BiDi algorithm */
 			bidi_add_tags(translation_buffer,out,MAX_LINE_SIZE,
-					is_rtl ,replace_minus);
+					is_rtl ,replace_minus,no_mirroring);
 		}
 	}
 	else {
