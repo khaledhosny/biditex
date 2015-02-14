@@ -5,16 +5,16 @@ endif
 TEXMF=$(DESTDIR)/usr/share/texmf
 
 all:
-	cd biditex ; make
+	cd src ; make
 	cd docs/biditex-doc ; make
 
 all_static:
-	cd biditex ; make all_static
+	cd src ; make all_static
 	cd docs/biditex-doc ; make
 	
 
 clean:
-	cd biditex ; make clean
+	cd src ; make clean
 	cd docs/biditex-doc ; make clean
 	cd docs/man ; make clean
 
@@ -28,7 +28,7 @@ installfiles:
 	mkdir -p $(INSTPATH)/bin
 	mkdir -p $(INSTPATH)/share/doc/biditex/example
 	mkdir -p $(INSTPATH)/share/man/man1
-	cp -p biditex/biditex $(INSTPATH)/bin
+	cp -p src/biditex $(INSTPATH)/bin
 	cp -p docs/man/biditex.1 $(INSTPATH)/share/man/man1
 	mkdir -p $(INSTPATH)/share/doc/biditex
 	mkdir -p $(INSTPATH)/share/doc/biditex/example
@@ -37,7 +37,7 @@ installfiles:
 	cp -p docs/example/example.tex $(INSTPATH)/share/doc/biditex/example
 	cp -p docs/example/makefile $(INSTPATH)/share/doc/biditex/example
 	mkdir -p $(TEXMF)/tex/latex/biditex
-	cp -p biditex/biditex.sty $(TEXMF)/tex/latex/biditex/
+	cp -p src/biditex.sty $(TEXMF)/tex/latex/biditex/
 
 install: installfiles
 	mktexlsr
