@@ -167,9 +167,9 @@ static const char *bidi_mirror(FriBidiChar *in,int *size,
 
 
 /* Returns the minimal embedding level for required direction */
-int bidi_basic_level(int is_heb)
+int bidi_basic_level(int is_rtl)
 {
-	if(is_heb)
+	if(is_rtl)
 		return 1;
 	return 0;
 }
@@ -386,7 +386,7 @@ int bidi_calc_equation(FriBidiChar *in)
 
 /* This function parses the text "in" in marks places that
  * should be ignored by fribidi in "is_command" as true */
-void bidi_mark_commands(FriBidiChar *in,int len,char *is_command,int is_heb)
+void bidi_mark_commands(FriBidiChar *in,int len,char *is_command,int is_rtl)
 {
 
 	char *parthness_stack;
@@ -461,10 +461,10 @@ void bidi_mark_commands(FriBidiChar *in,int len,char *is_command,int is_heb)
 }
 
 #if ( FRIBIDI_MAJOR_VERSION * 100 + FRIBIDI_MINOR_VERSION ) > 10 // 0.10
-static void get_bidi_levels(FriBidiChar *in,int length,int is_heb,FriBidiLevel *embed)
+static void get_bidi_levels(FriBidiChar *in,int length,int is_rtl,FriBidiLevel *embed)
 {
 	FriBidiCharType *types = utl_malloc(sizeof(FriBidiCharType)*length);
-	FriBidiParType direction = is_heb ? FRIBIDI_PAR_RTL : FRIBIDI_PAR_LTR;
+	FriBidiParType direction = is_rtl ? FRIBIDI_PAR_RTL : FRIBIDI_PAR_LTR;
 
 	fribidi_get_bidi_types(in,length,types);
 	fribidi_get_par_embedding_levels(types,length,&direction,embed);
@@ -473,10 +473,10 @@ static void get_bidi_levels(FriBidiChar *in,int length,int is_heb,FriBidiLevel *
 }
 
 #else // old fribidi
-static void get_bidi_levels(FriBidiChar *in,int length,int is_heb,FriBidiLevel *embed)
+static void get_bidi_levels(FriBidiChar *in,int length,int is_rtl,FriBidiLevel *embed)
 {
 	FriBidiCharType direction;
-	if(is_heb)
+	if(is_rtl)
 		direction = FRIBIDI_TYPE_RTL;
 	else
 		direction = FRIBIDI_TYPE_LTR;
@@ -488,7 +488,7 @@ static void get_bidi_levels(FriBidiChar *in,int length,int is_heb,FriBidiLevel *
 /* This function marks embedding levels at for text "in",
  * it ignores different tags */
 void bidi_tag_tolerant_fribidi_l2v(	FriBidiChar *in,int len,
-									int is_heb,
+									int is_rtl,
 									FriBidiLevel *embed,
 									char *is_command)
 {
@@ -503,7 +503,7 @@ void bidi_tag_tolerant_fribidi_l2v(	FriBidiChar *in,int len,
 	 * This is main parser that marks commands    *
 	 * across the text i.e. marks non text        *
 	 **********************************************/
-	bidi_mark_commands(in,len,is_command,is_heb);
+	bidi_mark_commands(in,len,is_command,is_rtl);
 	
 	/**********************************************/
 	/* Copy all the data without tags for fribidi */
@@ -527,7 +527,7 @@ void bidi_tag_tolerant_fribidi_l2v(	FriBidiChar *in,int len,
 	 ***************/
 	
 	/* Note - you must take the new size for firibidi */
-	get_bidi_levels(in_tmp,out_pos,is_heb,embed_tmp);
+	get_bidi_levels(in_tmp,out_pos,is_rtl,embed_tmp);
 
 	/****************************************************
 	 * Return the tags and fill missing embedding level *
@@ -546,7 +546,7 @@ void bidi_tag_tolerant_fribidi_l2v(	FriBidiChar *in,int len,
 			
 			if(in_pos == 0 || in_pos + cmd_len == len){
 				/* When we on start/end assume basic direction */
-				fill_level = bidi_basic_level(is_heb);
+				fill_level = bidi_basic_level(is_rtl);
 			}
 			else {
 				/* Fill with minimum on both sides */
@@ -600,7 +600,7 @@ int bidi_is_directional_mark(FriBidiChar c)
 
 /* The function that parses line and adds required \R \L tags */
 void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,
-					int is_heb,int replace_minus)
+					int is_rtl,int replace_minus)
 {
 	int len,new_len,level,new_level,brakets;
 	int i,size;
@@ -614,9 +614,9 @@ void bidi_add_tags(FriBidiChar *in,FriBidiChar *out,int limit,
 	
 	is_command=(char*)utl_malloc(len);
 	
-	bidi_tag_tolerant_fribidi_l2v(in,len,is_heb,bidi_embed,is_command);
+	bidi_tag_tolerant_fribidi_l2v(in,len,is_rtl,bidi_embed,is_command);
 
-	level=bidi_basic_level(is_heb);
+	level=bidi_basic_level(is_rtl);
 	
 	new_len=0;
 	out[0]=0;
@@ -960,7 +960,7 @@ void bidi_parse_biditex_command(FriBidiChar *in)
 int bidi_process(FriBidiChar *in,FriBidiChar *out,
 						int replace_minus,int tranlate_only)
 {
-	int i,is_heb;
+	int i,is_rtl;
 	
 	if(bidi_strieq_u_a(in,"%BIDI")) {
 		bidi_parse_biditex_command(in);
@@ -968,7 +968,7 @@ int bidi_process(FriBidiChar *in,FriBidiChar *out,
 	}
 	
 	if(bidi_mode != MODE_BIDIOFF) {
-		is_heb = (bidi_mode == MODE_BIDION);
+		is_rtl = (bidi_mode == MODE_BIDION);
 		if(tranlate_only) {
 			/* In case of translation only put directly to output buffer */
 			bidi_translate_tags(in,out,MAX_LINE_SIZE);
@@ -979,7 +979,7 @@ int bidi_process(FriBidiChar *in,FriBidiChar *out,
 			
 			/* Apply BiDi algorithm */
 			bidi_add_tags(translation_buffer,out,MAX_LINE_SIZE,
-					is_heb ,replace_minus);
+					is_rtl ,replace_minus);
 		}
 	}
 	else {
