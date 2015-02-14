@@ -22,13 +22,6 @@ development files just go to biditex
 library just do make and copy executable
 to the place you need to type make install
 
-If you have fribidi installed in non-standard
-location, like /opt/fribidi you may specify
-the path using environment variables
-FRIBIDI_LIBS and FRIBIDI_CFLAGS like this
-
-FRIBIDI_LIBS=-L/opt/fribidi/lib FRIBIDI_CFLAGS=-I/opt/fribidi/include make
-
 By default biditex is installed in using "/usr" prefix,
 If you want to change this you may use DESTDIR envrionment variable, thus
 biditxt would be installed using $(DESTDIR)/usr prefix

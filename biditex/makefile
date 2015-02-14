@@ -7,9 +7,9 @@ TEXMF=/usr/share/texmf
 BINPATH=$(INSTPATH)/bin/
 MANPATH=$(INSTPATH)/share/man/man1/
 
-LIBS = $(FRIBIDI_LIBS) -lfribidi
+LIBS = `pkg-config --libs fribidi`
 CC = gcc
-CFLAGS = $(FRIBIDI_CFLAGS) -O2 -Wall -g 
+CFLAGS = `pkg-config --cflags fribidi` -O2 -Wall -g 
 
 
 all: $(TR)
