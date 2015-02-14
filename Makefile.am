@@ -24,3 +24,7 @@ AM_CPPFLAGS = \
 LDADD = \
   $(FRIBIDI_LIBS) \
   $(NULL)
+
+EXTRA_DIST = \
+  GPLv2.txt \
+  $(NULL)
