@@ -14,9 +14,6 @@ CFLAGS = `pkg-config --cflags fribidi` -O2 -Wall -g
 
 all: $(TR)
 
-all_static: $(OBJ)
-	$(CC) -o $(TR) $^ /usr/lib/libfribidi.a
-
 $(TR) : $(OBJ)
 	$(CC) -o $@ $^ $(LIBS)
 
